@@ -1,0 +1,398 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Today's Menu | Sea Blue Andhra Kitchen{% endblock %}
+
+{% block head %}
+  <style>
+    :root {
+      --sea-900: #0f4c5c;
+      --sea-800: #13677f;
+      --sea-700: #1d7a90;
+      --sea-100: #eaf9ff;
+      --sea-50: #f5fcff;
+      --ink: #123445;
+      --muted: #587a86;
+      --line: rgba(17, 103, 126, 0.18);
+      --gold: #d9a64a;
+      --white: #ffffff;
+    }
+
+    .menu-page {
+      min-height: calc(100vh - 170px);
+      padding: 150px 20px 90px;
+      background: linear-gradient(180deg, #25afd5 0%, #edf9ff 45%, #e5f4fb 100%);
+      color: var(--ink);
+    }
+
+    .menu-shell {
+      width: min(1160px, 100%);
+      margin: auto;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 58px;
+      color: var(--sea-700);
+      font: 500 12px var(--mono);
+      letter-spacing: .04em;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: var(--sea-900);
+    }
+
+    .heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 50px;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: var(--sea-700);
+      font: 500 11px var(--mono);
+      letter-spacing: .16em;
+    }
+
+    .eyebrow span {
+      color: var(--gold);
+    }
+
+    .heading h1 {
+      margin: 0;
+      color: var(--sea-900);
+      font-size: clamp(48px, 7vw, 92px);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: .9;
+    }
+
+    .heading h1 em {
+      color: var(--sea-700);
+      font-family: Georgia, serif;
+      font-weight: 400;
+    }
+
+    .menu-intro {
+      max-width: 350px;
+      margin: 0 0 5px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .menu-meta {
+      display: flex;
+      gap: 25px;
+      margin: 54px 0 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font: 500 10px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .availability {
+      color: var(--sea-800);
+    }
+
+    .availability i {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 7px;
+      border-radius: 50%;
+      background: #2ea8a8;
+    }
+
+    .tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      width: min(320px, 100%);
+      padding: 0 15px;
+      border: 1px solid rgba(18, 111, 135, 0.18);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--sea-700);
+      box-shadow: 0 10px 24px rgba(19, 103, 127, 0.08);
+    }
+
+    .search span {
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .search input {
+      width: 100%;
+      padding: 14px 10px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font: 500 12px var(--sans);
+    }
+
+    .search input::placeholder {
+      color: #7a9aa8;
+    }
+
+    .tools button {
+      padding: 9px 12px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font: 600 11px var(--sans);
+    }
+
+    .tools button:hover,
+    .tools button.active {
+      border-bottom: 2px solid var(--sea-700);
+      color: var(--sea-900);
+    }
+
+    .items {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .item {
+      min-height: 190px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 14px 36px rgba(19, 103, 127, 0.08);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 38px rgba(19, 103, 127, 0.12);
+    }
+
+    .item.off {
+      opacity: .58;
+    }
+
+    .item .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .item .top b:first-child {
+      color: var(--sea-900);
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .item .top b:last-child {
+      color: var(--sea-700);
+      font: 500 14px var(--mono);
+      white-space: nowrap;
+    }
+
+    .item p {
+      min-height: 52px;
+      margin: 16px 0 23px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .item .tag {
+      color: #1ba39a;
+      font: 500 10px var(--mono);
+      letter-spacing: .08em;
+    }
+
+    .item.off .tag {
+      color: #8e7d5d;
+    }
+
+    .note {
+      margin: 28px 0 0;
+      color: #5d7c8a;
+      font-size: 11px;
+    }
+
+    .note span {
+      color: #2ea8a8;
+      margin-right: 7px;
+    }
+
+    @media (max-width: 850px) {
+      .site-header nav {
+        gap: 14px;
+      }
+
+      .heading {
+        align-items: start;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .menu-intro {
+        max-width: 480px;
+      }
+
+      .tools {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .search {
+        width: 100%;
+      }
+
+      .tools #filters {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+      }
+
+      .tools button {
+        flex: 0 0 auto;
+      }
+
+      .items {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .menu-page {
+        padding: 125px 16px 60px;
+      }
+
+      .site-header {
+        width: calc(100% - 24px);
+        padding-left: 12px;
+      }
+
+      .site-header nav {
+        display: none;
+      }
+
+      .nav-actions {
+        gap: 10px;
+      }
+
+      .nav-actions .login {
+        font-size: 11px;
+      }
+
+      .button-small {
+        padding: 10px;
+      }
+
+      .back-link {
+        margin-bottom: 42px;
+      }
+
+      .menu-meta {
+        gap: 13px;
+        flex-wrap: wrap;
+        margin-top: 40px;
+      }
+
+      .items {
+        grid-template-columns: 1fr;
+      }
+
+      .item {
+        min-height: 0;
+      }
+
+      .item p {
+        min-height: 0;
+      }
+
+      .heading h1 {
+        font-size: 62px;
+      }
+
+      .site-footer {
+        padding: 30px 16px !important;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .site-footer p {
+        font-size: 10px !important;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="menu-page">
+    <div class="menu-shell">
+      <a class="back-link" href="{% url 'restaurant:home' %}">← Back to Food Waves</a>
+
+      <div class="heading">
+        <div>
+          <p class="eyebrow">OUR KITCHEN <span>• OPEN TODAY</span></p>
+          <h1>
+            Telugu taste,<br>
+            <em>in every bite.</em>
+          </h1>
+        </div>
+
+        <p class="menu-intro">
+          Fresh Andhra and South Indian classics, slow-cooked with bold spices, coastal flavours, and the comfort of home-style Telugu hospitality.
+        </p>
+      </div>
+
+      <div class="menu-meta">
+        <span>12 dishes</span>
+        <span>Chef's special</span>
+        <span class="availability"><i></i> Live availability</span>
+      </div>
+
+      <div class="tools">
+        <label class="search">
+          <span aria-hidden="true">⌕</span>
+          <input id="search" type="search" placeholder="Search dishes or ingredients" aria-label="Search dishes or ingredients">
+        </label>
+
+        <div id="filters" aria-label="Filter menu by category">
+          <button class="active" data-f="all">All dishes</button>
+          <button data-f="starters">Starters</button>
+          <button data-f="tiffins">Tiffins</button>
+          <button data-f="curries">Curries</button>
+          <button data-f="rice">Rice &amp; Biryani</button>
+          <button data-f="beverages">Beverages</button>
+        </div>
+      </div>
+
+      <div id="items" class="items"></div>
+
+      <p class="note">
+        <span>●</span>
+        Freshly prepared in the kitchen. Andhra Spice and South Indian favourites are served hot.
+      </p>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'restaurant/js/menu.js' %}"></script>
+{% endblock %}

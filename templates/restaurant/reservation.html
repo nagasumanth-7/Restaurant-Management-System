@@ -1,0 +1,276 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Reserve a Table | Saffron Table{% endblock %}
+
+{% block head %}
+  <style>
+    .reserve {
+      min-height: calc(100vh - 170px);
+      padding: 150px 20px 90px;
+      background: radial-gradient(circle at 78% 12%, rgba(77, 132, 120, 0.18), transparent 30%), linear-gradient(135deg, #f7f1ea 0%, #efe3d6 100%);
+      color: #2f2a26;
+    }
+
+    .wrap {
+      width: min(1100px, 100%);
+      margin: auto;
+    }
+
+    .reservation {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: #b46d31;
+      font: 500 11px var(--mono);
+      letter-spacing: .16em;
+    }
+
+    h1 {
+      margin: 0;
+      color: #28221d;
+      font-size: clamp(48px, 6vw, 86px);
+      font-weight: 600;
+      letter-spacing: -.04em;
+      line-height: .92;
+    }
+
+    h1 em {
+      color: #b46d31;
+      font-family: Georgia, serif;
+      font-weight: 400;
+    }
+
+    .intro,
+    .help {
+      color: #685d56;
+      font-size: 15px;
+      line-height: 1.7;
+      margin-top: 24px;
+    }
+
+    .help {
+      margin-top: 32px;
+    }
+
+    .help a {
+      color: #b46d31;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .card {
+      background: rgba(255, 252, 247, 0.96);
+      border: 1px solid rgba(132, 101, 71, 0.2);
+      box-shadow: 0 24px 50px rgba(78, 58, 36, 0.12);
+      padding: 32px 28px;
+      border-radius: 18px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 32px;
+      color: #2f2a26;
+      letter-spacing: -.03em;
+    }
+
+    .card > p {
+      margin: 10px 0 26px;
+      color: #8d7767;
+      font-size: 13px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 9px;
+      color: #514438;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 14px 13px;
+      border: 1px solid #b6a898;
+      background: #fff;
+      color: #2f2a26;
+      border-radius: 6px;
+      outline: 0;
+      font: 500 13px var(--sans);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #52806d;
+      box-shadow: 0 0 0 3px rgba(82, 128, 109, 0.12);
+    }
+
+    .status {
+      margin: 26px 0 18px;
+      padding: 14px 15px;
+      border-radius: 8px;
+      background: #f2efe9;
+      color: #645d56;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      width: 100%;
+      padding: 15px 18px;
+      border: 0;
+      border-radius: 8px;
+      background: linear-gradient(120deg, #5cd8ff, #8afff2);
+      color: #031426;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 0 34px rgba(67, 188, 227, 0.3);
+    }
+
+    .wide {
+      width: 100%;
+    }
+
+    .center {
+      margin: 24px 0 0;
+      color: #948477;
+      font-size: 11px;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .center a {
+      color: #b46d31;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    @media (max-width: 760px) {
+      .reservation {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 24px 20px;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="reserve page-top">
+    <div class="wrap reservation">
+      <div>
+        <p class="eyebrow">PLAN YOUR VISIT</p>
+
+        <h1>
+          Your table is
+          <br>
+          <em>almost ready.</em>
+        </h1>
+
+        <p class="intro">
+          Book ahead for lunch or dinner. We’ll hold your table for 15 minutes from your reservation time.
+        </p>
+
+        <p class="help">
+          ☎
+          <b>Need a hand?</b>
+          <br>
+          Call our host team at
+          <a href="tel:+918012345678">+91 80 1234 5678</a>
+        </p>
+      </div>
+
+      <form class="card" id="book">
+        <h3>Make a reservation</h3>
+        <p>All fields marked * are required.</p>
+
+        <div class="row">
+          <label>
+            Date *
+            <input id="date" required type="date">
+          </label>
+
+          <label>
+            Time *
+            <select id="time" required>
+              <option value="">Select time</option>
+              <option>12:30 PM</option>
+              <option>1:30 PM</option>
+              <option>6:30 PM</option>
+              <option>7:30 PM</option>
+              <option>8:30 PM</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            Guests *
+            <select id="guests" required>
+              <option value="">Select guests</option>
+              <option>1 guest</option>
+              <option>2 guests</option>
+              <option>3 guests</option>
+              <option>4 guests</option>
+              <option>5 guests</option>
+              <option>6 guests</option>
+            </select>
+          </label>
+
+          <label>
+            Seating preference
+            <select>
+              <option>No preference</option>
+              <option>Indoor</option>
+              <option>Outdoor</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="status" id="status">
+          Choose date, time and guest count to check availability.
+        </div>
+
+        <button class="button wide" type="submit">
+          Check availability
+          <b>→</b>
+        </button>
+
+        <p class="center">
+          Already booked before?
+          <a href="{% url 'restaurant:login' %}">Log in</a>
+          to view reservations.
+        </p>
+      </form>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'restaurant/js/reservation.js' %}"></script>
+{% endblock %}

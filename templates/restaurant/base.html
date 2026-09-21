@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#061124">
+
+    <title>{% block title %}Food Waves{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'restaurant/css/styles.css' %}">
+
+    {% block head %}{% endblock %}
+  </head>
+
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+
+    <header class="site-header" id="site-header">
+      <a class="logo" href="{% url 'restaurant:home' %}">
+        <span class="logo-mark">≈</span>
+        FOOD <b>WAVES</b>
+      </a>
+
+      <nav aria-label="Primary navigation">
+        <a href="{% url 'restaurant:home' %}#home">Home</a>
+        <a href="{% url 'restaurant:home' %}#features">Features</a>
+        <a href="{% url 'restaurant:menu' %}">Menu</a>
+        <a href="{% url 'restaurant:home' %}#orders">Orders</a>
+        <a href="{% url 'restaurant:home' %}#about">About</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="login" href="{% url 'restaurant:login' %}">Log in</a>
+      </div>
+    </header>
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <a class="logo" href="{% url 'restaurant:home' %}">
+        <span class="logo-mark">≈</span>
+        FOOD <b>WAVES</b>
+      </a>
+      <p>Built for the rhythm of modern hospitality.</p>
+      <p>© 2026 Food Waves</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>
