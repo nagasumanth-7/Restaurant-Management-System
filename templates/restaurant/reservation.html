@@ -1,179 +1,273 @@
 {% extends "restaurant/base.html" %}
 {% load static %}
 
-{% block title %}Reserve a Table | Saffron Table{% endblock %}
+{% block title %}Pre-book a Table | Food Waves Luxury Dining{% endblock %}
 
 {% block head %}
   <style>
-    .reserve {
+    .reserve-page {
       min-height: calc(100vh - 170px);
-      padding: 150px 20px 90px;
-      background: radial-gradient(circle at 78% 12%, rgba(77, 132, 120, 0.18), transparent 30%), linear-gradient(135deg, #f7f1ea 0%, #efe3d6 100%);
-      color: #2f2a26;
+      padding: 145px max(6vw, 24px) 100px;
+      background: 
+        radial-gradient(circle at 85% 20%, rgba(6, 182, 212, 0.16), transparent 45%),
+        radial-gradient(circle at 15% 75%, rgba(243, 194, 113, 0.08), transparent 40%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
     }
 
-    .wrap {
-      width: min(1100px, 100%);
+    .reserve-shell {
+      width: min(1200px, 100%);
       margin: auto;
     }
 
-    .reservation {
+    .reserve-grid {
       display: grid;
-      grid-template-columns: 1fr 1.1fr;
-      gap: 40px;
-      align-items: center;
+      grid-template-columns: minmax(320px, 0.95fr) 1.05fr;
+      gap: 50px;
+      align-items: start;
     }
 
-    .eyebrow {
-      margin: 0 0 18px;
-      color: #b46d31;
-      font: 500 11px var(--mono);
-      letter-spacing: .16em;
+    /* Left Atmosphere Column */
+    .reserve-ambience {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
     }
 
-    h1 {
+    .reserve-ambience h1 {
       margin: 0;
-      color: #28221d;
-      font-size: clamp(48px, 6vw, 86px);
-      font-weight: 600;
-      letter-spacing: -.04em;
-      line-height: .92;
+      font-size: clamp(40px, 5vw, 68px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.02;
+      color: #ffffff;
     }
 
-    h1 em {
-      color: #b46d31;
-      font-family: Georgia, serif;
+    .reserve-ambience h1 em {
+      color: var(--gold);
+      font-family: var(--serif);
       font-weight: 400;
+      font-style: italic;
     }
 
-    .intro,
-    .help {
-      color: #685d56;
+    .reserve-intro {
+      color: var(--text-muted);
       font-size: 15px;
-      line-height: 1.7;
-      margin-top: 24px;
-    }
-
-    .help {
-      margin-top: 32px;
-    }
-
-    .help a {
-      color: #b46d31;
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    .card {
-      background: rgba(255, 252, 247, 0.96);
-      border: 1px solid rgba(132, 101, 71, 0.2);
-      box-shadow: 0 24px 50px rgba(78, 58, 36, 0.12);
-      padding: 32px 28px;
-      border-radius: 18px;
-    }
-
-    .card h3 {
+      line-height: 1.75;
       margin: 0;
-      font-size: 32px;
-      color: #2f2a26;
-      letter-spacing: -.03em;
     }
 
-    .card > p {
-      margin: 10px 0 26px;
-      color: #8d7767;
+    .ambience-feature-frame {
+      position: relative;
+      height: 320px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      border: 1px solid var(--border-glass);
+      box-shadow: var(--shadow-3d);
+    }
+
+    .ambience-feature-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s ease;
+    }
+
+    .ambience-feature-frame:hover img {
+      transform: scale(1.06);
+    }
+
+    .frame-badge {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      padding: 8px 16px;
+      border-radius: 30px;
+      background: rgba(3, 8, 19, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font: 600 11px var(--mono);
+      backdrop-filter: blur(10px);
+      letter-spacing: 0.08em;
+    }
+
+    .concierge-callout {
+      padding: 22px 26px;
+      border-radius: var(--radius-lg);
+      background: rgba(11, 27, 51, 0.65);
+      border: 1px solid var(--border-glass);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .concierge-callout span.icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(91, 214, 255, 0.12);
+      border: 1px solid rgba(91, 214, 255, 0.3);
+      color: var(--cyan);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .concierge-callout b {
+      display: block;
+      color: #ffffff;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .concierge-callout a {
+      color: var(--blue);
+      text-decoration: none;
+      font-family: var(--mono);
+      font-weight: 700;
       font-size: 13px;
     }
 
-    .row {
+    /* Right Glassmorphic Form Card */
+    .booking-card {
+      background: rgba(9, 23, 44, 0.82);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(121, 202, 255, 0.22);
+      box-shadow: var(--shadow-3d);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      position: relative;
+    }
+
+    .booking-card-head {
+      margin-bottom: 28px;
+    }
+
+    .booking-card-head h2 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .booking-card-head p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .login-banner {
+      background: linear-gradient(135deg, rgba(243, 194, 113, 0.16) 0%, rgba(217, 166, 74, 0.08) 100%);
+      border: 1px solid rgba(243, 194, 113, 0.45);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .login-banner span {
+      color: var(--gold-light);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .login-banner a {
+      padding: 8px 16px;
+      background: var(--gold);
+      color: #1a0f02;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .login-banner a:hover {
+      transform: translateY(-1px);
+    }
+
+    /* Form Layout */
+    .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin-bottom: 18px;
+      gap: 16px;
+      margin-bottom: 16px;
     }
 
-    label {
+    .form-group {
       display: grid;
-      gap: 9px;
-      color: #514438;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .form-group label, .form-row label {
+      color: #c0d8f0;
       font-size: 12px;
       font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
-    input,
-    select {
-      width: 100%;
-      padding: 14px 13px;
-      border: 1px solid #b6a898;
-      background: #fff;
-      color: #2f2a26;
-      border-radius: 6px;
-      outline: 0;
-      font: 500 13px var(--sans);
-    }
-
-    input:focus,
-    select:focus {
-      border-color: #52806d;
-      box-shadow: 0 0 0 3px rgba(82, 128, 109, 0.12);
-    }
-
-    .status {
-      margin: 26px 0 18px;
-      padding: 14px 15px;
-      border-radius: 8px;
-      background: #f2efe9;
-      color: #645d56;
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      width: 100%;
-      padding: 15px 18px;
-      border: 0;
-      border-radius: 8px;
-      background: linear-gradient(120deg, #5cd8ff, #8afff2);
-      color: #031426;
-      text-decoration: none;
+    /* Live Summary Status Card */
+    .live-summary {
+      margin: 20px 0;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      background: rgba(8, 28, 54, 0.85);
+      border: 1px solid rgba(91, 214, 255, 0.28);
+      color: var(--cyan);
       font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 0 34px rgba(67, 188, 227, 0.3);
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
-    .wide {
-      width: 100%;
+    .live-summary i {
+      font-size: 18px;
     }
 
-    .center {
-      margin: 24px 0 0;
-      color: #948477;
+    .field-errors {
+      color: #f87171;
       font-size: 11px;
-      text-align: center;
-      line-height: 1.7;
+      margin-top: 4px;
+      list-style: none;
+      padding-left: 0;
     }
 
-    .center a {
-      color: #b46d31;
+    .card-footer-links {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .card-footer-links a {
+      color: var(--blue);
       text-decoration: none;
       font-weight: 700;
     }
 
-    @media (max-width: 760px) {
-      .reservation {
+    .card-footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 900px) {
+      .reserve-grid {
         grid-template-columns: 1fr;
       }
-
-      .card {
-        padding: 24px 20px;
+      .booking-card {
+        padding: 28px 20px;
       }
-
-      .row {
+      .form-row {
         grid-template-columns: 1fr;
       }
     }
@@ -181,96 +275,190 @@
 {% endblock %}
 
 {% block content %}
-  <section class="reserve page-top">
-    <div class="wrap reservation">
-      <div>
-        <p class="eyebrow">PLAN YOUR VISIT</p>
+  <section class="reserve-page">
+    <div class="reserve-shell">
+      <div class="reserve-grid">
+        <!-- Atmosphere & Ambience Left Column -->
+        <div class="reserve-ambience">
+          <div>
+            <p class="eyebrow">PRE-BOOK YOUR TABLE <span>• LUXURY HOSPITALITY</span></p>
+            <h1>
+              Your table is<br>
+              <em>ready for you.</em>
+            </h1>
+            <p class="reserve-intro" style="margin-top: 14px;">
+              Pre-book your fine dining experience ahead of time. We hold reservations with personal host attention for 15 minutes and tailor table settings to your requested seating area.
+            </p>
+          </div>
 
-        <h1>
-          Your table is
-          <br>
-          <em>almost ready.</em>
-        </h1>
+          <div class="ambience-feature-frame card-3d">
+            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80" alt="Food Waves Table Setting Ambience" loading="lazy">
+            <span class="frame-badge">✦ CANDLELIT MAIN SALON</span>
+          </div>
 
-        <p class="intro">
-          Book ahead for lunch or dinner. We’ll hold your table for 15 minutes from your reservation time.
-        </p>
+          <div class="concierge-callout card-3d">
+            <span class="icon">☎</span>
+            <div>
+              <b>Prefer Personal Concierge Assistance?</b>
+              <p style="margin: 0; font-size: 12px; color: var(--text-muted);">
+                Our reservation host is ready to assist with group bookings &amp; private salons:
+                <a href="tel:+918012345678">+91 80 1234 5678</a>
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <p class="help">
-          ☎
-          <b>Need a hand?</b>
-          <br>
-          Call our host team at
-          <a href="tel:+918012345678">+91 80 1234 5678</a>
-        </p>
+        <!-- 3D Pre-booking Form Card -->
+        <div class="booking-card card-3d">
+          <div class="booking-card-head">
+            <h2>Reserve a Table</h2>
+            <p>Select your preferred dining time, party size, and seating area.</p>
+          </div>
+
+          {% if not is_authenticated %}
+            <div class="login-banner">
+              <span>Please log in to confirm and manage your table reservation.</span>
+              <a href="{% url 'restaurant:login' %}?next={% url 'restaurant:reservation' %}">Log in now →</a>
+            </div>
+          {% endif %}
+
+          <form method="POST" action="{% url 'restaurant:reservation' %}" id="reservationForm">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="field-errors">
+                {% for error in form.non_field_errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="id_name">Guest Full Name *</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                  <ul class="field-errors">{% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="id_phone_number">Contact Phone *</label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}
+                  <ul class="field-errors">{% for error in form.phone_number.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="id_email">Email Address *</label>
+              {{ form.email }}
+              {% if form.email.errors %}
+                <ul class="field-errors">{% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+              {% endif %}
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="id_date">Reservation Date *</label>
+                {{ form.date }}
+                {% if form.date.errors %}
+                  <ul class="field-errors">{% for error in form.date.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="id_time">Time Slot *</label>
+                {{ form.time }}
+                {% if form.time.errors %}
+                  <ul class="field-errors">{% for error in form.time.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="id_guests">Party Size *</label>
+                {{ form.guests }}
+                {% if form.guests.errors %}
+                  <ul class="field-errors">{% for error in form.guests.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="id_seating_preference">Seating Area Preference</label>
+                {{ form.seating_preference }}
+                {% if form.seating_preference.errors %}
+                  <ul class="field-errors">{% for error in form.seating_preference.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="id_special_requests">Special Requests &amp; Celebrations</label>
+              {{ form.special_requests }}
+              {% if form.special_requests.errors %}
+                <ul class="field-errors">{% for error in form.special_requests.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+              {% endif %}
+            </div>
+
+            <!-- Dynamic Live Summary Indicator -->
+            <div class="live-summary" id="liveSummary">
+              <i>✦</i>
+              <span id="summaryText">Choose your reservation date, time, and party size to pre-book.</span>
+            </div>
+
+            <button class="button button-gold" style="width: 100%; justify-content: space-between;" type="submit">
+              <span>Confirm Table Pre-Booking</span>
+              <b>→</b>
+            </button>
+          </form>
+
+          <p class="card-footer-links">
+            {% if user.is_authenticated %}
+              Already booked? <a href="{% url 'restaurant:booking_history' %}">View your booking history →</a>
+            {% else %}
+              Have an account? <a href="{% url 'restaurant:login' %}">Log in to view reservations →</a>
+            {% endif %}
+          </p>
+        </div>
       </div>
-
-      <form class="card" id="book">
-        <h3>Make a reservation</h3>
-        <p>All fields marked * are required.</p>
-
-        <div class="row">
-          <label>
-            Date *
-            <input id="date" required type="date">
-          </label>
-
-          <label>
-            Time *
-            <select id="time" required>
-              <option value="">Select time</option>
-              <option>12:30 PM</option>
-              <option>1:30 PM</option>
-              <option>6:30 PM</option>
-              <option>7:30 PM</option>
-              <option>8:30 PM</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="row">
-          <label>
-            Guests *
-            <select id="guests" required>
-              <option value="">Select guests</option>
-              <option>1 guest</option>
-              <option>2 guests</option>
-              <option>3 guests</option>
-              <option>4 guests</option>
-              <option>5 guests</option>
-              <option>6 guests</option>
-            </select>
-          </label>
-
-          <label>
-            Seating preference
-            <select>
-              <option>No preference</option>
-              <option>Indoor</option>
-              <option>Outdoor</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="status" id="status">
-          Choose date, time and guest count to check availability.
-        </div>
-
-        <button class="button wide" type="submit">
-          Check availability
-          <b>→</b>
-        </button>
-
-        <p class="center">
-          Already booked before?
-          <a href="{% url 'restaurant:login' %}">Log in</a>
-          to view reservations.
-        </p>
-      </form>
     </div>
   </section>
 {% endblock %}
 
 {% block scripts %}
-  <script src="{% static 'restaurant/js/reservation.js' %}"></script>
+  <script>
+    const dateInput = document.getElementById("id_date");
+    const timeInput = document.getElementById("id_time");
+    const guestsInput = document.getElementById("id_guests");
+    const seatingInput = document.getElementById("id_seating_preference");
+    const summaryText = document.getElementById("summaryText");
+
+    if (dateInput) {
+      dateInput.min = "{{ min_date }}";
+      if (!dateInput.value) {
+        dateInput.value = "{{ min_date }}";
+      }
+    }
+
+    function updateLiveSummary() {
+      const d = dateInput?.value;
+      const t = timeInput?.value;
+      const g = guestsInput?.value;
+      const s = seatingInput?.value || "Standard";
+
+      if (d && t && g) {
+        summaryText.innerHTML = `Table for <b>${g} guest${g > 1 ? 's' : ''}</b> (${s}) on <b>${d}</b> at <b>${t}</b> will be reserved.`;
+      }
+    }
+
+    [dateInput, timeInput, guestsInput, seatingInput].forEach(field => {
+      field?.addEventListener("change", updateLiveSummary);
+      field?.addEventListener("input", updateLiveSummary);
+    });
+
+    updateLiveSummary();
+  </script>
 {% endblock %}

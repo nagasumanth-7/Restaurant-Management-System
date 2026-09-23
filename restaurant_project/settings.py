@@ -34,7 +34,17 @@ TEMPLATES = [{
     ]},
 }]
 WSGI_APPLICATION = "restaurant_project.wsgi.application"
-DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'DATABASE': 'postgres',
+        'USER': 'postgres.smurbxgwcwsnzirrpqgh',
+        'PASSWORD': 'Sumanth@999',
+        'HOST': 'aws-0-ap-south-1.pooler.supabase.com',
+        'PORT': '5432',
+    }
+}
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
@@ -42,3 +52,15 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTHENTICATION_BACKENDS = [
+    "restaurant.backends.EmailBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "Food Waves <noreply@foodwaves.com>"
+
+LOGIN_URL = "restaurant:login"
+LOGIN_REDIRECT_URL = "restaurant:reservation"
+LOGOUT_REDIRECT_URL = "restaurant:home"

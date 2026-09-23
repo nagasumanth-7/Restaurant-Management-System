@@ -1,393 +1,243 @@
 {% extends "restaurant/base.html" %}
 {% load static %}
 
-{% block title %}Log in | Sea Blue Andhra Kitchen{% endblock %}
+{% block title %}Sign In | Food Waves Luxury Dining{% endblock %}
 
 {% block head %}
   <style>
-    :root {
-      --sea-900: #0f4c5c;
-      --sea-800: #13677f;
-      --sea-700: #1d7a90;
-      --sea-600: #2a8fa1;
-      --sea-100: #eaf9ff;
-      --sea-50: #f5fcff;
-      --ink: #123445;
-      --muted: #587a86;
-      --line: rgba(17, 103, 126, 0.12);
-      --accent: #d9a64a;
-      --white: #ffffff;
-    }
-
     .auth-page {
       min-height: calc(100vh - 170px);
-      padding: 128px 20px 82px;
-      background: linear-gradient(180deg, #f6fdff 0%, #edf9ff 45%, #e5f4fb 100%);
-      color: var(--ink);
+      padding: 135px 20px 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: 
+        radial-gradient(circle at 75% 25%, rgba(6, 182, 212, 0.16), transparent 50%),
+        radial-gradient(circle at 20% 70%, rgba(243, 194, 113, 0.08), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
     }
 
     .auth-layout {
       display: grid;
-      grid-template-columns: minmax(300px, .92fr) minmax(420px, 1.08fr);
+      grid-template-columns: minmax(320px, 0.9fr) minmax(400px, 1.1fr);
       max-width: 1040px;
-      min-height: 610px;
+      width: 100%;
+      min-height: 590px;
       margin: auto;
-      box-shadow: 0 32px 64px rgba(19, 103, 127, 0.14);
-      border-radius: 20px;
+      border-radius: var(--radius-xl);
       overflow: hidden;
+      border: 1px solid var(--border-glass);
+      background: rgba(9, 23, 44, 0.82);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: var(--shadow-3d);
     }
 
+    /* Left Story with Ambience Photo */
     .auth-story {
       position: relative;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
-      padding: 32px 40px;
-      background: linear-gradient(135deg, #0f4c5c 0%, #1d7a90 50%, #2a8fa1 100%);
+      padding: 44px;
+      background-image: 
+        linear-gradient(180deg, rgba(3, 8, 19, 0.72) 0%, rgba(4, 14, 30, 0.94) 100%),
+        url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80");
+      background-size: cover;
+      background-position: center;
       color: #ffffff;
-    }
-
-    .auth-story:after {
-      position: absolute;
-      right: -90px;
-      bottom: -120px;
-      width: 330px;
-      height: 330px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 50%;
-      content: "";
-      box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.05), 0 0 0 60px rgba(255, 255, 255, 0.03);
     }
 
     .auth-back {
       position: relative;
-      z-index: 1;
-      color: #c0e4f7;
+      z-index: 2;
+      color: var(--blue);
       text-decoration: none;
-      font: 500 11px var(--mono);
+      font: 600 11px var(--mono);
       letter-spacing: .08em;
+      transition: color 0.2s, transform 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .auth-back:hover {
-      color: #fff;
+      color: var(--cyan);
+      transform: translateX(-3px);
     }
 
     .story-copy {
       position: relative;
-      z-index: 1;
-      max-width: 350px;
-      margin-top: auto;
-      margin-bottom: auto;
-    }
-
-    .auth-story .eyebrow {
-      color: #b3d9f5;
+      z-index: 2;
+      max-width: 340px;
+      margin: auto 0;
     }
 
     .story-copy h1 {
-      margin: 14px 0 23px;
-      font-size: clamp(42px, 5vw, 68px);
-      font-weight: 700;
-      letter-spacing: -.04em;
-      line-height: .95;
+      margin: 12px 0 18px;
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1.02;
+      color: #ffffff;
     }
 
     .story-copy h1 em {
-      color: #ffd89b;
-      font-family: Georgia, serif;
+      color: var(--gold);
+      font-family: var(--serif);
+      font-style: italic;
       font-weight: 400;
     }
 
-    .story-copy > p:last-child {
-      max-width: 300px;
-      color: #d4e9f5;
+    .story-copy p {
+      color: var(--text-muted);
       font-size: 14px;
       line-height: 1.7;
+      margin: 0;
     }
 
     .story-mark {
       position: relative;
-      z-index: 1;
+      z-index: 2;
       display: flex;
       align-items: center;
       gap: 12px;
-      color: #ffd89b;
+      color: var(--gold);
     }
 
     .story-mark span {
-      font-size: 42px;
+      font-size: 40px;
       line-height: .5;
     }
 
     .story-mark small {
-      color: #b3d9f5;
-      font: 500 9px var(--mono);
-      letter-spacing: .14em;
+      color: var(--cyan);
+      font: 600 9px var(--mono);
+      letter-spacing: .16em;
       line-height: 1.6;
     }
 
+    /* Right Form Card */
     .auth-card {
-      padding: 70px 78px;
-      background: #ffffff;
-    }
-
-    .form-heading .eyebrow {
-      margin-bottom: 15px;
+      padding: 56px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: rgba(8, 20, 39, 0.6);
     }
 
     .form-heading h2 {
-      margin: 0;
-      color: var(--sea-900);
-      font-size: 36px;
+      margin: 6px 0 8px;
+      color: #ffffff;
+      font-size: 32px;
+      font-weight: 800;
       letter-spacing: -.03em;
     }
 
-    .form-heading > p:last-child {
-      margin: 12px 0 38px;
-      color: var(--muted);
+    .form-heading p {
+      margin: 0 0 26px;
+      color: var(--text-muted);
       font-size: 13px;
-      line-height: 1.6;
     }
 
     .auth-card form {
       display: grid;
-      gap: 20px;
+      gap: 18px;
     }
 
-    .auth-card form > label:not(.check) {
+    .form-group {
       display: grid;
-      gap: 9px;
-      color: var(--sea-900);
+      gap: 7px;
+    }
+
+    .form-group label {
+      color: #c0d8f0;
       font-size: 12px;
       font-weight: 700;
-    }
-
-    .auth-card input:not([type="checkbox"]) {
-      width: 100%;
-      padding: 14px 13px;
-      border: 1px solid var(--line);
-      background: #f9fffe;
-      color: var(--ink);
-      border-radius: 8px;
-      outline: 0;
-      font: 500 13px var(--sans);
-      transition: border-color .2s, box-shadow .2s;
-    }
-
-    .auth-card input:not([type="checkbox"]):focus {
-      border-color: var(--sea-700);
-      box-shadow: 0 0 0 3px rgba(29, 122, 144, 0.12);
-      background: #ffffff;
     }
 
     .form-options {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: -4px;
-      font-size: 11px;
+      font-size: 12px;
     }
 
-    .form-options a,
-    .center a {
-      color: var(--sea-700);
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .form-options a:hover,
-    .center a:hover {
-      text-decoration: underline;
-    }
-
-    .check {
-      display: flex !important;
+    .check-label {
+      display: flex;
       align-items: center;
       gap: 8px;
-      color: var(--muted) !important;
-      font-size: 11px !important;
-      font-weight: 500 !important;
+      color: var(--text-muted);
+      cursor: pointer;
     }
 
-    .check input {
+    .check-label input {
       width: 15px;
       height: 15px;
-      accent-color: var(--sea-700);
+      accent-color: var(--blue);
     }
 
-    .terms {
-      margin-top: -5px;
+    .unverified-box {
+      background: rgba(243, 194, 113, 0.12);
+      border: 1px solid rgba(243, 194, 113, 0.4);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--gold-light);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .auth-card .button {
-      justify-content: space-between;
-      margin-top: 8px;
+    .btn-resend {
+      align-self: flex-start;
+      padding: 7px 14px;
+      background: var(--gold);
+      color: #1a0f02 !important;
       border: 0;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 11px;
       cursor: pointer;
-      padding: 14px 20px;
-      background: linear-gradient(135deg, #1d7a90 0%, #2a8fa1 100%);
-      color: #ffffff;
-      font-size: 15px;
-      font-weight: 700;
-      border-radius: 8px;
-      transition: transform .2s, box-shadow .2s;
     }
 
-    .auth-card .button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(19, 103, 127, 0.18);
-    }
-
-    .wide {
-      width: 100%;
-    }
-
-    .center {
-      margin: 32px 0 0;
-      color: var(--muted);
-      font-size: 11px;
+    .form-footer {
+      margin-top: 26px;
       text-align: center;
-      line-height: 1.7;
+      font-size: 13px;
+      color: var(--text-dim);
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-
-    .form-row.full-width {
-      grid-template-columns: 1fr;
-    }
-
-    .auth-card form > label:not(.check),
-    .form-row label {
-      display: grid;
-      gap: 9px;
-      color: var(--sea-900);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .otp-section {
-      display: none;
-    }
-
-    .otp-section.active {
-      display: block;
-    }
-
-    .otp-inputs {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-
-    .otp-input {
-      width: 100%;
-      padding: 14px 13px;
-      border: 1px solid var(--line);
-      background: #f9fffe;
-      color: var(--ink);
-      border-radius: 8px;
-      outline: 0;
-      font: 700 18px var(--sans);
-      text-align: center;
-      transition: border-color .2s, box-shadow .2s;
-    }
-
-    .otp-input:focus {
-      border-color: var(--sea-700);
-      box-shadow: 0 0 0 3px rgba(29, 122, 144, 0.12);
-    }
-
-    .otp-input::-webkit-outer-spin-button,
-    .otp-input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-
-    .otp-input[type=number] {
-      appearance: textfield;
-      -moz-appearance: textfield;
-    }
-
-    .otp-note {
-      margin-bottom: 20px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    .resend-otp {
-      text-align: center;
-      margin-top: 16px;
-      font-size: 11px;
-    }
-
-    .resend-otp a {
-      color: var(--sea-700);
+    .form-footer a {
+      color: var(--blue);
       font-weight: 700;
       text-decoration: none;
     }
 
-    .resend-otp a:hover {
+    .form-footer a:hover {
       text-decoration: underline;
     }
 
-    @media (max-width: 760px) {
-      .auth-page {
-        padding: 110px 16px 55px;
-      }
-
-      .auth-layout {
-        display: block;
-        min-height: 0;
-        border-radius: 16px;
-      }
-
-      .auth-story {
-        min-height: 370px;
-        padding: 27px 28px;
-      }
-
-      .story-copy {
-        margin-top: 70px;
-        margin-bottom: 35px;
-      }
-
-      .story-copy h1 {
-        font-size: 54px;
-      }
-
-      .auth-card {
-        padding: 42px 28px 38px;
-      }
-
-      .form-heading > p:last-child {
-        margin-bottom: 30px;
-      }
+    .field-errors {
+      color: #f87171;
+      font-size: 11px;
+      margin-top: 4px;
+      list-style: none;
+      padding-left: 0;
     }
 
-    @media (max-width: 420px) {
+    @media (max-width: 780px) {
+      .auth-layout {
+        grid-template-columns: 1fr;
+      }
       .auth-story {
-        min-height: 340px;
+        min-height: 280px;
+        padding: 30px;
       }
-
       .auth-card {
-        padding: 35px 20px;
-      }
-
-      .form-options {
-        align-items: flex-start;
-        gap: 12px;
-        flex-direction: column;
-      }
-
-      .nav-actions .login {
-        display: none;
+        padding: 36px 24px;
       }
     }
   </style>
@@ -395,24 +245,24 @@
 
 {% block content %}
   <section class="auth-page">
-    <div class="auth-layout">
+    <div class="auth-layout card-3d">
       <aside class="auth-story">
         <a class="auth-back" href="{% url 'restaurant:home' %}">← Food Waves</a>
 
         <div class="story-copy">
-          <p class="eyebrow">WELCOME BACK</p>
+          <p class="eyebrow" style="color: var(--gold-light);">WELCOME BACK</p>
           <h1>
             Your table<br>
             <em>is waiting.</em>
           </h1>
           <p>
-            Keep your reservations close, discover new favourites, and make every visit feel effortless.
+            Log in to manage your dining reservations, view your booking history, and explore our daily chef specials.
           </p>
         </div>
 
         <div class="story-mark">
           <span>≈</span>
-          <small>GOOD FOOD<br>GOOD RHYTHM</small>
+          <small>FOOD WAVES<br>TELUGU HOSPITALITY</small>
         </div>
       </aside>
 
@@ -420,144 +270,70 @@
         <div class="form-heading">
           <p class="eyebrow">SIGN IN</p>
           <h2>Welcome back</h2>
-          <p>Log in with email and phone number to continue.</p>
+          <p>Sign in using your verified email and password.</p>
         </div>
 
-        <form id="loginForm">
-          <div class="form-row">
-            <label>
-              Email address
-              <input id="emailInput" required type="email" placeholder="you@example.com">
-            </label>
+        {% if unverified_email %}
+          <div class="unverified-box">
+            <b>✉ Email Verification Required</b>
+            <span>Your email address <b>{{ unverified_email }}</b> has not been verified yet. Check your inbox or request a new link below:</span>
+            <form method="POST" action="{% url 'restaurant:resend_verification' %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="email" value="{{ unverified_email }}">
+              <button class="btn-resend" type="submit">Resend Verification Email →</button>
+            </form>
+          </div>
+        {% endif %}
 
-            <label>
-              Phone number
-              <input id="phoneInput" required type="tel" placeholder="+1 (555) 000-0000">
+        <form method="POST" action="{% url 'restaurant:login' %}{% if next %}?next={{ next }}{% endif %}">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="field-errors">
+              {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="form-group">
+            <label for="id_email">Email address</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+              <ul class="field-errors">
+                {% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label for="id_password">Password</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+              <ul class="field-errors">
+                {% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          <div class="form-options">
+            <label class="check-label">
+              {{ form.remember_me }}
+              <span>Remember me on this device</span>
             </label>
           </div>
 
-          <button class="button wide" id="sendOtpBtn" type="button">
-            Send OTP <b>→</b>
+          <button class="button button-gold" style="width: 100%; justify-content: space-between;" type="submit">
+            <span>Sign In to Account</span>
+            <b>→</b>
           </button>
         </form>
 
-        <div class="otp-section" id="otpSection">
-          <div class="otp-note">
-            Enter the 6-digit code sent to your email address
-          </div>
-
-          <div class="otp-inputs" id="otpInputs">
-            <input class="otp-input" type="number" maxlength="1" placeholder="0" min="0" max="9">
-            <input class="otp-input" type="number" maxlength="1" placeholder="0" min="0" max="9">
-            <input class="otp-input" type="number" maxlength="1" placeholder="0" min="0" max="9">
-            <input class="otp-input" type="number" maxlength="1" placeholder="0" min="0" max="9">
-            <input class="otp-input" type="number" maxlength="1" placeholder="0" min="0" max="9">
-            <input class="otp-input" type="number" maxlength="1" placeholder="0" min="0" max="9">
-          </div>
-
-          <button class="button wide" id="verifyOtpBtn" type="button">
-            Verify OTP <b>→</b>
-          </button>
-
-          <div class="resend-otp">
-            Didn't receive the code?
-            <a href="#" id="resendOtpLink">Resend OTP</a>
-          </div>
-        </div>
-
-        <p class="center">
-          Welcome to Food Waves Andhra Kitchen
+        <p class="form-footer">
+          Don’t have an account?
+          <a href="{% url 'restaurant:signup' %}">Create an account →</a>
         </p>
       </div>
     </div>
   </section>
-{% endblock %}
-
-{% block scripts %}
-  <script>
-    // OTP functionality
-    const emailInput = document.getElementById('emailInput');
-    const phoneInput = document.getElementById('phoneInput');
-    const sendOtpBtn = document.getElementById('sendOtpBtn');
-    const otpSection = document.getElementById('otpSection');
-    const otpInputs = document.querySelectorAll('.otp-input');
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    const resendOtpLink = document.getElementById('resendOtpLink');
-
-    // Handle OTP input navigation
-    otpInputs.forEach((input, index) => {
-      input.addEventListener('input', (e) => {
-        if (e.target.value.length > 1) {
-          e.target.value = e.target.value.slice(0, 1);
-        }
-
-        if (e.target.value && index < otpInputs.length - 1) {
-          otpInputs[index + 1].focus();
-        }
-      });
-
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !input.value && index > 0) {
-          otpInputs[index - 1].focus();
-        }
-      });
-
-      input.addEventListener('paste', (e) => {
-        e.preventDefault();
-        const pastedData = e.clipboardData.getData('text');
-        const otpDigits = pastedData.slice(0, 6).split('');
-        otpDigits.forEach((digit, i) => {
-          if (i < otpInputs.length && /^\d$/.test(digit)) {
-            otpInputs[i].value = digit;
-          }
-        });
-        if (otpDigits.length === 6) {
-          otpInputs[5].focus();
-        }
-      });
-    });
-
-    // Send OTP
-    sendOtpBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (!emailInput.value || !phoneInput.value) {
-        alert('Please enter both email and phone number');
-        return;
-      }
-
-      // Show OTP section
-      otpSection.classList.add('active');
-      document.querySelector('.form-heading').style.opacity = '0.7';
-      document.getElementById('loginForm').style.opacity = '0.5';
-      otpInputs[0].focus();
-
-      // In production, this would send OTP to the email
-      console.log('OTP sent to:', emailInput.value);
-    });
-
-    // Verify OTP
-    verifyOtpBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const otp = Array.from(otpInputs).map(input => input.value).join('');
-
-      if (otp.length !== 6) {
-        alert('Please enter a valid 6-digit OTP');
-        return;
-      }
-
-      // In production, this would verify OTP with backend
-      console.log('OTP verified:', otp);
-      alert('Successfully logged in with email: ' + emailInput.value);
-      // Redirect or proceed with login
-    });
-
-    // Resend OTP
-    resendOtpLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      otpInputs.forEach(input => input.value = '');
-      otpInputs[0].focus();
-      alert('OTP resent to: ' + emailInput.value);
-      console.log('OTP resent');
-    });
-  </script>
 {% endblock %}

@@ -1,0 +1,364 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}My Booking History | Food Waves Luxury Dining{% endblock %}
+
+{% block head %}
+  <style>
+    .history-page {
+      min-height: calc(100vh - 170px);
+      padding: 145px max(6vw, 24px) 100px;
+      background: 
+        radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.16), transparent 45%),
+        radial-gradient(circle at 15% 80%, rgba(243, 194, 113, 0.08), transparent 40%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .history-shell {
+      width: min(1140px, 100%);
+      margin: auto;
+    }
+
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 44px;
+      flex-wrap: wrap;
+      gap: 24px;
+      border-bottom: 1px solid var(--border-glass);
+      padding-bottom: 30px;
+    }
+
+    .history-head h1 {
+      margin: 0;
+      font-size: clamp(34px, 4.4vw, 56px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+
+    .history-head h1 span {
+      background: linear-gradient(120deg, #5bd6ff, #8afff2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .history-section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 40px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .count-badge {
+      font-size: 11px;
+      font-family: var(--mono);
+      background: rgba(91, 214, 255, 0.14);
+      color: var(--cyan);
+      padding: 3px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(91, 214, 255, 0.28);
+    }
+
+    .bookings-list {
+      display: grid;
+      gap: 20px;
+    }
+
+    .reservation-card {
+      background: rgba(11, 27, 51, 0.72);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 26px 32px;
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) auto;
+      gap: 24px;
+      align-items: center;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                  border-color 0.25s ease, 
+                  box-shadow 0.25s ease;
+    }
+
+    .reservation-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--border-glow);
+      box-shadow: var(--shadow-3d);
+    }
+
+    .card-meta {
+      display: grid;
+      gap: 6px;
+    }
+
+    .meta-ref {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--cyan);
+      letter-spacing: 0.1em;
+    }
+
+    .meta-date {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .meta-time {
+      font-family: var(--mono);
+      color: var(--blue);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .spec-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .spec-item b {
+      color: #ffffff;
+    }
+
+    .spec-notes {
+      width: 100%;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--gold);
+      padding: 8px 14px;
+      border-radius: 0 6px 6px 0;
+      color: #e5edf5;
+      margin-top: 6px;
+    }
+
+    .card-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .status-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status-confirmed {
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #34d399;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .status-cancelled {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+
+    .status-completed {
+      background: rgba(91, 214, 255, 0.14);
+      border: 1px solid rgba(91, 214, 255, 0.3);
+      color: var(--cyan);
+    }
+
+    .btn-cancel-table {
+      background: rgba(248, 114, 114, 0.08);
+      border: 1px solid rgba(248, 114, 114, 0.35);
+      color: #f87171;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cancel-table:hover {
+      background: rgba(248, 114, 114, 0.2);
+      border-color: #f87171;
+      color: #ff9999;
+    }
+
+    .empty-card {
+      background: rgba(11, 27, 51, 0.45);
+      border: 1px dashed var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 56px 30px;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .empty-card p {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin: 0 0 20px;
+    }
+
+    @media (max-width: 820px) {
+      .reservation-card {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+      .card-actions {
+        align-items: flex-start;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="history-page">
+    <div class="history-shell">
+      <div class="history-head">
+        <div>
+          <p class="eyebrow">EXECUTIVE DASHBOARD <span>• DINING GUEST</span></p>
+          <h1>Booking <span>History</span></h1>
+          <p style="margin: 8px 0 0; color: var(--text-muted); font-size: 14px;">
+            Overview of all your upcoming and past dining reservations at Food Waves.
+          </p>
+        </div>
+
+        <a class="button button-gold" href="{% url 'restaurant:reservation' %}">
+          <span>+ Pre-book Another Table</span>
+        </a>
+      </div>
+
+      <!-- Upcoming Reservations -->
+      <div class="history-section-title">
+        <span>Upcoming Reservations</span>
+        <span class="count-badge">{{ upcoming_bookings.count }} Active</span>
+      </div>
+
+      {% if upcoming_bookings %}
+        <div class="bookings-list">
+          {% for booking in upcoming_bookings %}
+            <div class="reservation-card card-3d">
+              <div class="card-meta">
+                <span class="meta-ref">BOOKING #{{ booking.id }}</span>
+                <span class="meta-date">{{ booking.date|date:"D, d M Y" }}</span>
+                <span class="meta-time">⏰ {{ booking.time }}</span>
+              </div>
+
+              <div class="card-specs">
+                <div class="spec-item">
+                  <span>Party:</span>
+                  <b>{{ booking.guests }} guest{{ booking.guests|pluralize }}</b>
+                </div>
+                <div class="spec-item">
+                  <span>Seating:</span>
+                  <b>{{ booking.seating_preference }}</b>
+                </div>
+                <div class="spec-item">
+                  <span>Contact:</span>
+                  <b>{{ booking.name }} ({{ booking.phone_number }})</b>
+                </div>
+
+                {% if booking.special_requests %}
+                  <div class="spec-notes">
+                    <strong>Note:</strong> {{ booking.special_requests }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="card-actions">
+                <span class="status-pill status-{{ booking.status|lower }}">{{ booking.status }}</span>
+
+                {% if booking.can_cancel %}
+                  <form method="POST" action="{% url 'restaurant:cancel_booking' booking.id %}" onsubmit="return confirm('Are you sure you want to cancel Table Reservation #{{ booking.id }}?');">
+                    {% csrf_token %}
+                    <button class="btn-cancel-table" type="submit">Cancel Table</button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-card">
+          <p>You do not currently have any upcoming table reservations.</p>
+          <a class="button button-gold" href="{% url 'restaurant:reservation' %}">
+            <span>Pre-book your table now →</span>
+          </a>
+        </div>
+      {% endif %}
+
+      <!-- Past Reservations -->
+      <div class="history-section-title" style="margin-top: 56px;">
+        <span>Past Dining Experiences</span>
+        <span class="count-badge" style="background: rgba(255,255,255,0.06); color: var(--text-dim);">{{ past_bookings.count }} Total</span>
+      </div>
+
+      {% if past_bookings %}
+        <div class="bookings-list">
+          {% for booking in past_bookings %}
+            <div class="reservation-card card-3d" style="opacity: 0.85;">
+              <div class="card-meta">
+                <span class="meta-ref" style="color: var(--text-dim);">BOOKING #{{ booking.id }}</span>
+                <span class="meta-date" style="font-size: 19px;">{{ booking.date|date:"D, d M Y" }}</span>
+                <span class="meta-time" style="color: var(--text-muted);">⏰ {{ booking.time }}</span>
+              </div>
+
+              <div class="card-specs">
+                <div class="spec-item">
+                  <span>Party:</span>
+                  <b>{{ booking.guests }} guest{{ booking.guests|pluralize }}</b>
+                </div>
+                <div class="spec-item">
+                  <span>Seating:</span>
+                  <b>{{ booking.seating_preference }}</b>
+                </div>
+                <div class="spec-item">
+                  <span>Reserved by:</span>
+                  <b>{{ booking.name }}</b>
+                </div>
+
+                {% if booking.special_requests %}
+                  <div class="spec-notes" style="border-color: var(--text-dim);">
+                    <strong>Note:</strong> {{ booking.special_requests }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="card-actions">
+                <span class="status-pill status-{{ booking.status|lower }}">
+                  {% if booking.status == "CONFIRMED" %}COMPLETED{% else %}{{ booking.status }}{% endif %}
+                </span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-card">
+          <p>No past reservations recorded yet.</p>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}
+  {% if success %}Email Verified | Food Waves Luxury Dining{% else %}Verification Failed | Food Waves{% endif %}
+{% endblock %}
+
+{% block head %}
+  <style>
+    .verify-result-page {
+      min-height: calc(100vh - 170px);
+      padding: 140px 20px 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: 
+        radial-gradient(circle at 50% 30%, rgba(6, 182, 212, 0.16), transparent 55%),
+        linear-gradient(180deg, #030813 0%, #061124 100%);
+    }
+
+    .result-card {
+      width: min(520px, 100%);
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-xl);
+      padding: 50px 40px;
+      box-shadow: var(--shadow-3d);
+      text-align: center;
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+    }
+
+    .status-icon {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 24px;
+      font-size: 34px;
+    }
+
+    .status-icon.success {
+      background: rgba(16, 185, 129, 0.16);
+      border: 2px solid #10b981;
+      color: #34d399;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+    }
+
+    .status-icon.fail {
+      background: rgba(239, 68, 68, 0.16);
+      border: 2px solid #ef4444;
+      color: #f87171;
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);
+    }
+
+    .result-card h1 {
+      font-size: 30px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .result-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0 0 28px;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="verify-result-page">
+    <div class="result-card card-3d">
+      {% if success %}
+        <div class="status-icon success">✓</div>
+        <h1>Email verified successfully!</h1>
+        <p>
+          Thank you for verifying your email address. Your Food Waves account is now active. You can log in to pre-book tables and view your reservation history.
+        </p>
+        <a class="button button-gold" style="width: 100%; justify-content: space-between;" href="{% url 'restaurant:login' %}">
+          <span>Log In to Your Account</span>
+          <b>→</b>
+        </a>
+      {% else %}
+        <div class="status-icon fail">✕</div>
+        <h1>Verification link invalid or expired</h1>
+        <p>
+          This verification token has either expired or has already been used. Please sign up again or request a new verification email.
+        </p>
+        <a class="button button-gold" style="width: 100%; justify-content: space-between;" href="{% url 'restaurant:signup' %}">
+          <span>Create an Account</span>
+          <b>→</b>
+        </a>
+        <a class="button button-outline" style="width: 100%; margin-top: 12px;" href="{% url 'restaurant:login' %}">
+          Back to Log In
+        </a>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

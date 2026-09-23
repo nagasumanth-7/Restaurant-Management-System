@@ -1,0 +1,152 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Verify Your Email | Food Waves Luxury Dining{% endblock %}
+
+{% block head %}
+  <style>
+    .verify-page {
+      min-height: calc(100vh - 170px);
+      padding: 140px 20px 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: 
+        radial-gradient(circle at 50% 30%, rgba(6, 182, 212, 0.16), transparent 55%),
+        linear-gradient(180deg, #030813 0%, #061124 100%);
+    }
+
+    .verify-card {
+      width: min(540px, 100%);
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-xl);
+      padding: 48px 40px;
+      box-shadow: var(--shadow-3d);
+      text-align: center;
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+    }
+
+    .icon-badge {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: rgba(91, 214, 255, 0.12);
+      border: 1px solid rgba(91, 214, 255, 0.35);
+      color: var(--cyan);
+      font-size: 32px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 24px;
+      box-shadow: 0 0 25px rgba(91, 214, 255, 0.25);
+    }
+
+    .verify-card h1 {
+      font-size: 30px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .verify-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0 0 20px;
+    }
+
+    .email-highlight {
+      display: inline-block;
+      padding: 8px 18px;
+      background: rgba(91, 214, 255, 0.08);
+      border: 1px solid rgba(91, 214, 255, 0.25);
+      border-radius: 30px;
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+
+    .actions-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .dev-box {
+      margin-top: 28px;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      background: rgba(243, 194, 113, 0.12);
+      border: 1px dashed rgba(243, 194, 113, 0.45);
+      text-align: left;
+      font-size: 12px;
+      color: var(--gold-light);
+    }
+
+    .dev-box b {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .dev-box a {
+      color: var(--cyan);
+      word-break: break-all;
+      display: inline-block;
+      margin-top: 8px;
+      font-weight: 700;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="verify-page">
+    <div class="verify-card card-3d">
+      <div class="icon-badge">✉</div>
+
+      <h1>Check your email</h1>
+
+      <p>
+        We’ve sent a verification link to your email address. Click the link inside to verify your email and activate your dining account.
+      </p>
+
+      {% if email %}
+        <div class="email-highlight">
+          {{ email }}
+        </div>
+      {% endif %}
+
+      <p style="font-size: 12px; color: var(--text-dim);">
+        Can’t find the email? Check your spam folder or click below to request a new link.
+      </p>
+
+      <div class="actions-stack">
+        {% if email %}
+          <form method="POST" action="{% url 'restaurant:resend_verification' %}">
+            {% csrf_token %}
+            <input type="hidden" name="email" value="{{ email }}">
+            <button class="button button-outline" style="width: 100%;" type="submit">
+              Resend verification email
+            </button>
+          </form>
+        {% endif %}
+
+        <a class="button button-outline" href="{% url 'restaurant:login' %}">
+          Back to Log In
+        </a>
+      </div>
+
+      {% if dev_verify_link %}
+        <div class="dev-box">
+          <b>⚡ Development Mode Quick Activation:</b>
+          <span>(Email backend is set to console. Click below to verify instantly):</span>
+          <br>
+          <a href="{{ dev_verify_link }}">Verify account now →</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}
