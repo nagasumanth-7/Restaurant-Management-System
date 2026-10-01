@@ -1,9 +1,11 @@
 from pathlib import Path
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "replace-this-with-a-secure-secret-key-before-production"
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -13,6 +15,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "restaurant",
 ]
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -22,7 +25,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 ROOT_URLCONF = "restaurant_project.urls"
+
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
     "DIRS": [BASE_DIR / "templates"],
@@ -33,18 +38,29 @@ TEMPLATES = [{
         "django.contrib.messages.context_processors.messages",
     ]},
 }]
+
 WSGI_APPLICATION = "restaurant_project.wsgi.application"
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'DATABASE': 'postgres',
-        'USER': 'postgres.smurbxgwcwsnzirrpqgh',
-        'PASSWORD': 'Sumanth@999',
-        'HOST': 'aws-0-ap-south-1.pooler.supabase.com',
-        'PORT': '5432',
+
+if "test" in sys.argv:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test_db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',
+            'DATABASE': 'postgres',
+            'USER': 'postgres.smurbxgwcwsnzirrpqgh',
+            'PASSWORD': 'Sumanth@999',
+            'HOST': 'aws-0-ap-south-1.pooler.supabase.com',
+            'PORT': '5432',
+        }
+    }
+
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
@@ -64,3 +80,7 @@ DEFAULT_FROM_EMAIL = "Food Waves <noreply@foodwaves.com>"
 LOGIN_URL = "restaurant:login"
 LOGIN_REDIRECT_URL = "restaurant:reservation"
 LOGOUT_REDIRECT_URL = "restaurant:home"
+
+SUPABASE_URL = "https://smurbxgwcwsnzirrpqgh.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtdXJieGd3Y3dzbnppcnJwcWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNjg1NTQsImV4cCI6MjEwNTc0NDU1NH0.WwvPZjEiWpTgxjLAyoATBlMiQ-_sJSIrNYV936uG2nk"
+

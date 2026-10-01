@@ -15,4 +15,6 @@ urlpatterns = [
     path("verification-sent/", views.verification_sent, name="verification_sent"),
     path("verify-email/<str:uidb64>/<str:token>/", views.verify_email, name="verify_email"),
     path("resend-verification/", views.resend_verification, name="resend_verification"),
+    
 ]
+

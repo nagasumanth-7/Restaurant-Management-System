@@ -1,16 +1,14 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
 from django.utils import timezone
 from datetime import timedelta
+from unittest.mock import patch
 
 from .models import UserProfile, Reservation
 
 
-class AuthenticationAndReservationTests(TestCase):
+class SupabaseAuthAndReservationTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.signup_url = reverse("restaurant:signup")
@@ -18,8 +16,13 @@ class AuthenticationAndReservationTests(TestCase):
         self.logout_url = reverse("restaurant:logout")
         self.reserve_url = reverse("restaurant:reservation")
         self.bookings_url = reverse("restaurant:booking_history")
+        self.auth_callback_url = reverse("restaurant:auth_callback")
+        self.resend_url = reverse("restaurant:resend_verification")
 
-    def test_signup_creates_inactive_user_and_sends_verification(self):
+    @patch("restaurant.views.supabase_sign_up")
+    def test_signup_creates_inactive_user_and_sends_verification(self, mock_sign_up):
+        mock_sign_up.return_value = (True, {"id": "sb-user-123", "identities": [{"id": "id1"}]}, None)
+
         data = {
             "name": "Sarah Connor",
             "email": "sarah@example.com",
@@ -31,66 +34,76 @@ class AuthenticationAndReservationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse("restaurant:verification_sent"))
 
-        # Verify user exists and is inactive
+        # Check mock called
+        self.assertTrue(mock_sign_up.called)
+
+        # Verify local user created as inactive
         user = User.objects.get(email="sarah@example.com")
         self.assertFalse(user.is_active)
         self.assertEqual(user.first_name, "Sarah Connor")
         self.assertEqual(user.profile.phone_number, "+91 9876543210")
         self.assertFalse(user.profile.is_email_verified)
 
-    def test_email_verification_activates_user(self):
-        # Create unverified user
-        user = User.objects.create_user(
-            username="john@example.com",
-            email="john@example.com",
-            password="SecretPassword1",
-            first_name="John Doe",
-            is_active=False,
+    @patch("restaurant.views.supabase_sign_in")
+    def test_login_with_unconfirmed_email_fails(self, mock_sign_in):
+        mock_sign_in.return_value = (
+            False,
+            "email_not_confirmed",
+            "Email not confirmed. Please check your inbox for the confirmation link sent by Supabase.",
         )
-        UserProfile.objects.create(user=user, phone_number="1234567890", is_email_verified=False)
 
-        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-        verify_url = reverse("restaurant:verify_email", kwargs={"uidb64": uidb64, "token": token})
-
-        response = self.client.get(verify_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Email verified successfully!")
-
-        user.refresh_from_db()
-        self.assertTrue(user.is_active)
-        self.assertTrue(user.profile.is_email_verified)
-
-    def test_login_with_unverified_email_fails(self):
-        User.objects.create_user(
-            username="unverified@example.com",
-            email="unverified@example.com",
-            password="SecretPassword1",
-            is_active=False,
-        )
         response = self.client.post(self.login_url, {
-            "email": "unverified@example.com",
+            "email": "unconfirmed@example.com",
             "password": "SecretPassword1",
         })
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Email Verification Required")
+        self.assertContains(response, "Email confirmation required")
+        self.assertContains(response, "unconfirmed@example.com")
+        self.assertContains(response, "Resend Verification Email")
 
-    def test_login_with_verified_email_succeeds(self):
-        user = User.objects.create_user(
-            username="verified@example.com",
-            email="verified@example.com",
-            password="SecretPassword1",
-            first_name="Alice",
-            is_active=True,
+    @patch("restaurant.views.supabase_sign_in")
+    def test_login_with_confirmed_email_succeeds(self, mock_sign_in):
+        mock_sign_in.return_value = (
+            True,
+            {
+                "access_token": "mock-jwt-token",
+                "user": {
+                    "id": "sb-uid-999",
+                    "email": "verified@example.com",
+                    "user_metadata": {
+                        "name": "Alice Wonderland",
+                        "phone_number": "+91 9999999999",
+                    },
+                },
+            },
+            None,
         )
-        UserProfile.objects.create(user=user, phone_number="9999999999", is_email_verified=True)
 
         response = self.client.post(self.login_url, {
-            "email": "VERIFIED@example.com",  # Test case-insensitivity
+            "email": "VERIFIED@example.com",
             "password": "SecretPassword1",
         })
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.reserve_url)
+
+        # Verify user logged into session and active
+        user = User.objects.get(email="verified@example.com")
+        self.assertTrue(user.is_active)
+        self.assertTrue(user.profile.is_email_verified)
+        self.assertEqual(self.client.session.get("supabase_token"), "mock-jwt-token")
+
+    @patch("restaurant.views.supabase_resend_confirmation")
+    def test_resend_verification_supabase(self, mock_resend):
+        mock_resend.return_value = (True, None)
+        response = self.client.post(self.resend_url, {"email": "resend@example.com"})
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("restaurant:verification_sent"))
+        self.assertTrue(mock_resend.called)
+
+    def test_auth_callback_redirects_to_login(self):
+        response = self.client.get(self.auth_callback_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, self.login_url)
 
     def test_prebook_table_requires_login(self):
         booking_data = {
