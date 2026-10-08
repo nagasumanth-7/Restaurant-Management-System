@@ -1,7 +1,7 @@
 {% extends "restaurant/base.html" %}
 {% load static %}
 
-{% block title %}Curated Culinary Menu | Food Waves{% endblock %}
+{% block title %}Curated Culinary Menu | Food Waves Luxury Dining{% endblock %}
 
 {% block head %}
   <style>
@@ -81,6 +81,7 @@
       font: 600 11px var(--mono);
       letter-spacing: .1em;
       text-transform: uppercase;
+      flex-wrap: wrap;
     }
 
     .menu-meta span {
@@ -183,7 +184,7 @@
     }
 
     .item {
-      min-height: 200px;
+      min-height: 240px;
       padding: 28px;
       background: rgba(11, 27, 51, 0.72);
       backdrop-filter: blur(16px);
@@ -197,6 +198,7 @@
       transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), 
                   border-color 0.25s ease, 
                   box-shadow 0.25s ease;
+      position: relative;
     }
 
     .item:hover {
@@ -206,7 +208,9 @@
     }
 
     .item.off {
-      opacity: 0.55;
+      opacity: 0.6;
+      border-color: rgba(239, 68, 68, 0.25);
+      background: rgba(16, 21, 35, 0.7);
     }
 
     .item .top {
@@ -225,17 +229,40 @@
 
     .item .top b:last-child {
       color: var(--gold-light);
-      font: 700 15px var(--mono);
+      font: 700 16px var(--mono);
       white-space: nowrap;
       text-shadow: 0 0 14px rgba(243, 194, 113, 0.35);
     }
 
+    .item-category-pill {
+      display: inline-block;
+      font: 600 9px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(91, 214, 255, 0.08);
+      border: 1px solid rgba(91, 214, 255, 0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+
     .item p {
-      margin: 14px 0 20px;
+      margin: 8px 0 18px;
       color: var(--text-muted);
       font-size: 13px;
       line-height: 1.65;
       flex: 1;
+    }
+
+    .item-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .item .tag {
@@ -248,7 +275,31 @@
     }
 
     .item.off .tag {
-      color: #a8a29e;
+      color: #f87171;
+    }
+
+    .unavailable-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #f87171;
+      font: 700 11px var(--mono);
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .prep-tag {
+      font: 500 11px var(--mono);
+      color: var(--text-dim);
+    }
+
+    .btn-add-cart {
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
     }
 
     .note-box {
@@ -267,6 +318,31 @@
     .note-box span {
       color: var(--cyan);
       font-size: 16px;
+    }
+
+    /* Cart Toast */
+    .cart-toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: rgba(9, 23, 44, 0.95);
+      border: 1px solid var(--cyan);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(6, 182, 212, 0.25);
+      backdrop-filter: blur(20px);
+      padding: 14px 22px;
+      border-radius: var(--radius-md);
+      color: #ffffff;
+      font-size: 13px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 1000;
+      animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
 
     @media (max-width: 960px) {
@@ -315,9 +391,9 @@
       </div>
 
       <div class="menu-meta">
-        <span>15 Curated Dishes</span>
+        <span><b style="color:#ffffff;">{{ total_count }}</b> Curated Dishes</span>
         <span>•</span>
-        <span>Chef's Daily Specials</span>
+        <span><b style="color:var(--cyan);">{{ available_count }}</b> Available Right Now</span>
         <span>•</span>
         <span><i class="live-dot"></i> Live Kitchen Availability</span>
       </div>
@@ -325,20 +401,80 @@
       <div class="tools">
         <label class="search">
           <span aria-hidden="true">⌕</span>
-          <input id="search" type="search" placeholder="Search dishes, ingredients, or spices..." aria-label="Search dishes or ingredients">
+          <input id="search" type="search" placeholder="Search dishes, ingredients, or spices..." aria-label="Search dishes or ingredients" value="{{ search_query }}">
         </label>
 
         <div id="filters" aria-label="Filter menu by category">
-          <button class="active" data-f="all">All Dishes</button>
-          <button data-f="starters">Starters</button>
-          <button data-f="tiffins">Tiffins</button>
-          <button data-f="curries">Curries</button>
-          <button data-f="rice">Rice &amp; Biryani</button>
-          <button data-f="beverages">Beverages</button>
+          <button class="{% if not selected_category %}active{% endif %}" data-f="all">All Dishes</button>
+          {% for category in categories %}
+            <button class="{% if selected_category and selected_category.id == category.id %}active{% endif %}" data-f="{{ category.slug_identifier }}">
+              {{ category.name }}
+            </button>
+          {% endfor %}
         </div>
       </div>
 
-      <div id="items" class="items"></div>
+      <div id="items" class="items">
+        {% for item in items %}
+          <article 
+            class="item card-3d {% if not item.is_available %}off{% endif %}" 
+            data-category="{{ item.category.slug_identifier }}"
+            data-search="{{ item.name|lower }} {{ item.description|lower }} {{ item.category.name|lower }}"
+            data-available="{{ item.is_available|yesno:'true,false' }}"
+          >
+            <div>
+              <div class="top">
+                <b>{{ item.name }}</b>
+                <b>₹ {{ item.price }}</b>
+              </div>
+              <span class="item-category-pill">{{ item.category.name }}</span>
+              <p>{{ item.description }}</p>
+            </div>
+
+            <div class="item-bottom">
+              <div>
+                {% if item.is_available %}
+                  <div class="tag">
+                    <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background: #75fff0;"></span>
+                    AVAILABLE TODAY
+                  </div>
+                  <small class="prep-tag">⏱ ~{{ item.preparation_time }} mins</small>
+                {% else %}
+                  <div class="unavailable-badge">
+                    <span>🔴</span>
+                    <span>Currently Unavailable</span>
+                  </div>
+                  {% if item.availability_reason %}
+                    <small style="display:block; color:var(--text-dim); margin-top:4px; font-size:10px;">{{ item.availability_reason }}</small>
+                  {% endif %}
+                {% endif %}
+              </div>
+
+              <div>
+                {% if item.is_available %}
+                  <button 
+                    class="button button-gold btn-add-cart" 
+                    type="button"
+                    data-id="{{ item.id }}"
+                    data-name="{{ item.name }}"
+                    data-price="{{ item.price }}"
+                    onclick="handleAddToCart('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.price }}')"
+                  >
+                    + ADD TO CART
+                  </button>
+                {% else %}
+                  <!-- Section 14: Customer cannot order unavailable items. No Add button. -->
+                  <span style="font-size: 11px; color: var(--text-dim); font-family: var(--mono);">Kitchen Sold Out</span>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+        {% empty %}
+          <div style="grid-column: 1 / -1; padding: 60px 24px; text-align: center; background: rgba(8, 22, 44, 0.4); border: 1px dashed rgba(121, 202, 255, 0.2); border-radius: 16px;">
+            <p style="color: var(--text-muted); font-size: 16px; margin: 0;">No culinary items are currently published in this section.</p>
+          </div>
+        {% endfor %}
+      </div>
 
       <div class="note-box">
         <span>✦</span>
@@ -346,6 +482,11 @@
       </div>
     </div>
   </section>
+
+  <div id="cartToast" class="cart-toast" role="alert">
+    <span style="color: var(--cyan); font-size: 16px;">✓</span>
+    <span id="toastMsg">Added to dining selection.</span>
+  </div>
 {% endblock %}
 
 {% block scripts %}

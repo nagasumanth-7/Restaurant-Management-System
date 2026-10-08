@@ -1,0 +1,269 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Cashier POS Terminal | Food Waves{% endblock %}
+
+{% block head %}
+  <style>
+    .pos-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(52, 211, 153, 0.1), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .pos-container {
+      max-width: 1280px;
+      margin: auto;
+    }
+
+    .pos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .pos-header h1 {
+      margin: 8px 0 0;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -.03em;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    .metric-card {
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      transition: transform .2s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .metric-label {
+      font: 600 11px var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .metric-val {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      color: #ffffff;
+    }
+
+    .panel-card {
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      margin-bottom: 32px;
+    }
+
+    .panel-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pos-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .pos-table th, .pos-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .pos-table th {
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .btn-settle {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      font-weight: 700;
+      border: 1px solid #34d399;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      transition: all .2s ease;
+    }
+
+    .btn-settle:hover {
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+      transform: translateY(-1px);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-shell">
+  <div class="pos-container">
+
+    <!-- POS Header -->
+    <div class="pos-header">
+      <div>
+        <span class="eyebrow" style="color: #34d399;">Point of Sale & Billing Terminal</span>
+        <h1>Cashier Checkout</h1>
+        <p style="color: var(--text-secondary); margin-top: 6px;">Manage guest bills, process cash / UPI / card payments, and track daily settlement metrics.</p>
+      </div>
+      <div>
+        <a href="{% url 'restaurant:cashier_reports' %}" class="button" style="background: rgba(52, 211, 153, 0.15); border-color: rgba(52, 211, 153, 0.35); color: #34d399;">
+          📊 Daily Sales Report
+        </a>
+      </div>
+    </div>
+
+    <!-- Revenue KPIs for Today -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span class="metric-label">Today's Revenue</span>
+        <div class="metric-val" style="color: var(--gold-light);">₹{{ summary.total_revenue }}</div>
+        <span style="font-size: 12px; color: var(--text-secondary); margin-top: 6px; display: block;">{{ summary.total_transactions }} transactions recorded</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">UPI / QR Collections</span>
+        <div class="metric-val" style="color: #60a5fa;">₹{{ summary.upi_total }}</div>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Cash Collections</span>
+        <div class="metric-val" style="color: #34d399;">₹{{ summary.cash_total }}</div>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Card Collections</span>
+        <div class="metric-val" style="color: #a78bfa;">₹{{ summary.card_total }}</div>
+      </div>
+    </div>
+
+    <!-- Unpaid Bills Awaiting Settlement -->
+    <div class="panel-card">
+      <div class="panel-title">
+        <span>Active Bills Ready for Settlement ({{ unpaid_bills|length }})</span>
+      </div>
+
+      {% if unpaid_bills %}
+        <table class="pos-table">
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th>Guest Party</th>
+              <th>Items</th>
+              <th>Subtotal</th>
+              <th>GST (5%)</th>
+              <th>Total Amount</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bill in unpaid_bills %}
+              <tr>
+                <td>
+                  <b style="color: #ffffff; font-size: 16px;">Table {{ bill.session.table.table_number }}</b>
+                  <div style="font-size: 11px; color: var(--text-secondary);">Session #{{ bill.session.id }}</div>
+                </td>
+                <td>
+                  <b style="color: #ffffff;">{{ bill.session.guest_name }}</b>
+                  <div style="font-size: 12px; color: var(--text-secondary);">Waiter: {{ bill.session.waiter.username|default:"Floor Staff" }}</div>
+                </td>
+                <td>{{ bill.session.total_items_count }} items</td>
+                <td>₹{{ bill.subtotal }}</td>
+                <td style="color: var(--text-secondary);">₹{{ bill.tax }}</td>
+                <td>
+                  <b style="color: var(--gold-light); font-size: 18px;">₹{{ bill.total }}</b>
+                </td>
+                <td style="text-align: right;">
+                  <a href="{% url 'restaurant:cashier_settle_bill' bill.id %}" class="btn-settle">
+                    💳 Settle & Checkout →
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div style="text-align: center; padding: 40px 16px;">
+          <p style="color: var(--text-secondary); font-size: 15px;">No unpaid bills awaiting checkout at this moment.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Occupied Tables Ready to Bill -->
+    <div class="panel-card">
+      <div class="panel-title">
+        <span>Occupied Dining Tables ({{ occupied_tables|length }})</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+        {% for table in occupied_tables %}
+          <div style="background: rgba(4, 13, 26, 0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <div>
+                <b style="color: #ffffff; font-size: 18px;">Table {{ table.table_number }}</b>
+                <div style="font-size: 11px; color: var(--text-secondary);">{{ table.capacity }} Seats • {{ table.get_floor_area_display }}</div>
+              </div>
+              <span class="status-badge badge-{{ table.status }}" style="font-size: 10px; padding: 3px 8px;">
+                {{ table.get_status_display }}
+              </span>
+            </div>
+
+            {% if table.current_session %}
+              <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">
+                Guest: <b style="color: #ffffff;">{{ table.current_session.guest_name }}</b><br>
+                Running Total: <b style="color: var(--gold-light);">₹{{ table.current_session.running_subtotal }}</b>
+              </div>
+              <a href="{% url 'restaurant:cashier_generate_bill' table.id %}" class="button" style="width: 100%; text-align: center; justify-content: center; padding: 8px 12px; font-size: 13px;">
+                Generate & Settle Bill →
+              </a>
+            {% endif %}
+          </div>
+        {% empty %}
+          <p style="grid-column: 1 / -1; color: var(--text-secondary); text-align: center; padding: 20px;">No tables are currently occupied.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+

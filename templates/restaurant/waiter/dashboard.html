@@ -1,0 +1,402 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Floor Operations | Waiter Portal{% endblock %}
+
+{% block head %}
+  <style>
+    .waiter-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 15% 20%, rgba(96, 165, 250, 0.12), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .waiter-container {
+      max-width: 1280px;
+      margin: auto;
+    }
+
+    .waiter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .waiter-header h1 {
+      margin: 8px 0 0;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -.03em;
+    }
+
+    /* Floor Stats */
+    .floor-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+      margin-bottom: 36px;
+    }
+
+    .stat-card {
+      background: rgba(9, 23, 44, 0.75);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      transition: transform .25s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .stat-label {
+      font: 600 11px var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    /* Ready to Serve Notification Banner */
+    .ready-banner {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1);
+    }
+
+    .ready-banner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ready-banner-title {
+      font-weight: 700;
+      font-size: 16px;
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ready-items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .ready-item-card {
+      background: rgba(6, 20, 39, 0.85);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Filters Bar */
+    .filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .chip-btn {
+      padding: 8px 16px;
+      border-radius: 999px;
+      font: 600 13px var(--sans);
+      border: 1px solid var(--border-glass);
+      background: rgba(9, 23, 44, 0.6);
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all .2s ease;
+    }
+
+    .chip-btn:hover {
+      background: rgba(19, 44, 82, 0.8);
+      color: #ffffff;
+      border-color: rgba(96, 165, 250, 0.4);
+    }
+
+    .chip-btn.active {
+      background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(37, 99, 235, 0.4));
+      border-color: #60a5fa;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(96, 165, 250, 0.25);
+    }
+
+    /* Table Grid */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 22px;
+    }
+
+    .table-box {
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all .3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .table-box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .table-box::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .table-status-AVAILABLE::before { background: #34d399; }
+    .table-status-OCCUPIED::before { background: #60a5fa; }
+    .table-status-BILL_PENDING::before { background: #fbbf24; }
+    .table-status-RESERVED::before { background: #a78bfa; }
+    .table-status-OUT_OF_SERVICE::before { background: #f87272; }
+
+    .table-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .table-number {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -.02em;
+    }
+
+    .table-area-badge {
+      font: 600 11px var(--mono);
+      color: var(--text-secondary);
+      letter-spacing: .05em;
+    }
+
+    .status-pill {
+      font: 700 11px var(--mono);
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .pill-AVAILABLE { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+    .pill-OCCUPIED { background: rgba(96, 165, 250, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.3); }
+    .pill-BILL_PENDING { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .pill-RESERVED { background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.3); }
+    .pill-OUT_OF_SERVICE { background: rgba(248, 114, 114, 0.15); color: #f87272; border: 1px solid rgba(248, 114, 114, 0.3); }
+
+    .session-info {
+      background: rgba(3, 8, 19, 0.45);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin: 12px 0 18px;
+      font-size: 13px;
+    }
+
+    .session-info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .session-info-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .btn-serve-now {
+      background: #10b981;
+      color: #030813;
+      font-weight: 700;
+      border: none;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .2s ease;
+    }
+
+    .btn-serve-now:hover {
+      background: #34d399;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="waiter-shell">
+  <div class="waiter-container">
+
+    <!-- Header -->
+    <div class="waiter-header">
+      <div>
+        <span class="eyebrow" style="color: #60a5fa;">Floor Operations Control</span>
+        <h1>Dining Tables & Service</h1>
+        <p style="color: var(--text-secondary); margin-top: 6px;">Manage active dining tables, take customer orders, and track kitchen preparations.</p>
+      </div>
+      <div>
+        <a href="{% url 'restaurant:chef_kds' %}" class="button" style="background: rgba(20, 184, 166, 0.2); border-color: rgba(20, 184, 166, 0.4); color: var(--cyan); margin-right: 10px;">
+          View Kitchen KDS
+        </a>
+      </div>
+    </div>
+
+    <!-- Ready to Serve Alert Banner -->
+    {% if pending_serves %}
+      <div class="ready-banner">
+        <div class="ready-banner-header">
+          <div class="ready-banner-title">
+            <span style="font-size: 20px;">🛎️</span> {{ pending_serves.count }} Dish(es) Ready from the Kitchen — Serve to Guests!
+          </div>
+        </div>
+        <div class="ready-items-grid">
+          {% for item in pending_serves %}
+            <div class="ready-item-card">
+              <div>
+                <b style="color: #ffffff; display: block;">Table {{ item.order.session.table.table_number }}</b>
+                <span style="color: #34d399; font-size: 13px;">{{ item.quantity }}x {{ item.menu_item.name }}</span>
+              </div>
+              <form method="POST" action="{% url 'restaurant:waiter_serve_item' item.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn-serve-now">Mark Served ✓</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Key Floor Metrics -->
+    <div class="floor-stats">
+      <div class="stat-card">
+        <span class="stat-label">Available Tables</span>
+        <div class="stat-value" style="color: #34d399;">{{ available_count }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Occupied Tables</span>
+        <div class="stat-value" style="color: #60a5fa;">{{ occupied_count }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Bills Pending Checkout</span>
+        <div class="stat-value" style="color: #fbbf24;">{{ bill_pending_count }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Reserved Tables</span>
+        <div class="stat-value" style="color: #a78bfa;">{{ reserved_count }}</div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-chips">
+        <a href="?status=ALL" class="chip-btn {% if status_filter == 'ALL' %}active{% endif %}">All Tables</a>
+        <a href="?status=AVAILABLE" class="chip-btn {% if status_filter == 'AVAILABLE' %}active{% endif %}">Available</a>
+        <a href="?status=OCCUPIED" class="chip-btn {% if status_filter == 'OCCUPIED' %}active{% endif %}">Occupied</a>
+        <a href="?status=BILL_PENDING" class="chip-btn {% if status_filter == 'BILL_PENDING' %}active{% endif %}">Bill Pending</a>
+        <a href="?status=RESERVED" class="chip-btn {% if status_filter == 'RESERVED' %}active{% endif %}">Reserved</a>
+      </div>
+    </div>
+
+    <!-- Tables Grid -->
+    <div class="tables-grid">
+      {% for table in tables %}
+        <div class="table-box table-status-{{ table.status }}">
+          <div>
+            <div class="table-top">
+              <div>
+                <div class="table-number">Table {{ table.table_number }}</div>
+                <div class="table-area-badge">{{ table.capacity }} Seats • {{ table.get_floor_area_display }}</div>
+              </div>
+              <span class="status-pill pill-{{ table.status }}">{{ table.get_status_display }}</span>
+            </div>
+
+            {% if table.current_session %}
+              <div class="session-info">
+                <div class="session-info-row">
+                  <span style="color: var(--text-secondary);">Guest:</span>
+                  <b style="color: #ffffff;">{{ table.current_session.guest_name }}</b>
+                </div>
+                <div class="session-info-row">
+                  <span style="color: var(--text-secondary);">Guests:</span>
+                  <span>{{ table.current_session.guest_count }} people</span>
+                </div>
+                <div class="session-info-row">
+                  <span style="color: var(--text-secondary);">Running Total:</span>
+                  <b style="color: var(--gold-light);">₹{{ table.current_session.running_subtotal }}</b>
+                </div>
+              </div>
+            {% else %}
+              <p style="color: var(--text-secondary); font-size: 13px; margin: 16px 0;">
+                Table is currently unseated and ready for guests.
+              </p>
+            {% endif %}
+          </div>
+
+          <div style="margin-top: 16px;">
+            <a href="{% url 'restaurant:waiter_table_detail' table.id %}" class="button" style="width: 100%; text-align: center; justify-content: center; padding: 10px 16px; font-size: 14px;">
+              {% if table.current_session %}Manage Orders & Bill →{% else %}Seat Guests & Open →{% endif %}
+            </a>
+          </div>
+        </div>
+      {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 48px 24px; background: rgba(9,23,44,0.6); border-radius: var(--radius-lg);">
+          <p style="color: var(--text-secondary); font-size: 16px;">No tables match the selected status filter.</p>
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+

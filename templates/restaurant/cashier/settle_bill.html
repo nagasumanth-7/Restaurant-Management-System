@@ -1,0 +1,220 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Checkout & Settle Bill #{{ bill.id }} | Cashier POS{% endblock %}
+
+{% block head %}
+  <style>
+    .settle-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(52, 211, 153, 0.1), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .settle-container {
+      max-width: 1050px;
+      margin: auto;
+    }
+
+    .settle-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 860px) {
+      .settle-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .settle-card {
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .summary-table th, .summary-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .summary-table th {
+      color: var(--text-secondary);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .calc-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .calc-row.total-row {
+      border-top: 1px solid var(--border-glass);
+      padding-top: 14px;
+      margin-top: 10px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="settle-shell">
+  <div class="settle-container">
+
+    <div style="margin-bottom: 20px;">
+      <a href="{% url 'restaurant:cashier_dashboard' %}" style="color: var(--text-secondary); text-decoration: none; font-size: 13px;">
+        ← Back to Cashier Dashboard
+      </a>
+    </div>
+
+    <div style="margin-bottom: 28px;">
+      <span class="eyebrow" style="color: #34d399;">Table {{ session.table.table_number }} • Session #{{ session.id }}</span>
+      <h1 style="font-size: 32px; font-weight: 800; color: #ffffff; margin: 4px 0;">Guest Bill & Checkout</h1>
+      <p style="color: var(--text-secondary); margin: 0;">Party: <b>{{ session.guest_name }}</b> ({{ session.guest_count }} guests)</p>
+    </div>
+
+    <div class="settle-grid">
+
+      <!-- Left Column: Order Breakdown & Invoice Calculations -->
+      <div class="settle-card">
+        <h3 style="margin-top: 0; color: #ffffff; margin-bottom: 16px;">Itemized Order Breakdown</h3>
+
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Dish</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+              {% for item in order.items.all %}
+                <tr>
+                  <td>
+                    <b style="color: #ffffff;">{{ item.menu_item.name }}</b>
+                  </td>
+                  <td>{{ item.quantity }}</td>
+                  <td>₹{{ item.unit_price }}</td>
+                  <td style="text-align: right; color: var(--gold-light); font-weight: 600;">₹{{ item.subtotal }}</td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Calculation Subtotals -->
+        <div style="background: rgba(3, 8, 19, 0.4); border-radius: var(--radius-md); padding: 18px;">
+          <div class="calc-row">
+            <span>Dishes Subtotal:</span>
+            <b style="color: #ffffff;">₹{{ bill.subtotal }}</b>
+          </div>
+          {% if bill.discount > 0 %}
+            <div class="calc-row" style="color: #34d399;">
+              <span>Discount Applied:</span>
+              <b>-₹{{ bill.discount }}</b>
+            </div>
+          {% endif %}
+          <div class="calc-row">
+            <span>Restaurant GST (5%):</span>
+            <span style="color: #ffffff;">₹{{ bill.tax }} (CGST 2.5% + SGST 2.5%)</span>
+          </div>
+          {% if bill.tip > 0 %}
+            <div class="calc-row">
+              <span>Gratuity / Tip:</span>
+              <span style="color: #ffffff;">+₹{{ bill.tip }}</span>
+            </div>
+          </div>
+          {% endif %}
+          <div class="calc-row total-row">
+            <span>Grand Total Due:</span>
+            <span style="color: var(--gold-light);">₹{{ bill.total }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Payment Processing Terminal -->
+      <div class="settle-card">
+        <h3 style="margin-top: 0; color: #ffffff; margin-bottom: 18px;">Process Payment</h3>
+
+        <form method="POST">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label>Payment Method</label>
+            {{ form.payment_method }}
+          </div>
+
+          <div class="form-group">
+            <label>Amount Tendered / Paid (₹)</label>
+            {{ form.amount_paid }}
+            <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Must be equal to or greater than ₹{{ bill.total }}</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label>Discount (%)</label>
+              {{ form.discount_pct }}
+            </div>
+            <div class="form-group">
+              <label>Tip (₹)</label>
+              {{ form.tip_amount }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Transaction / Auth Reference</label>
+            {{ form.transaction_id }}
+          </div>
+
+          <div style="margin-top: 24px;">
+            <button type="submit" class="button" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981, #059669); border-color: #34d399; color: #ffffff; font-weight: 700; padding: 14px; font-size: 16px;">
+              ✓ Complete Settlement & Print Receipt
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+

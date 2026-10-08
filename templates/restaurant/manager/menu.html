@@ -1,0 +1,385 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Menu Management | Manager Portal{% endblock %}
+
+{% block head %}
+  <style>
+    .manager-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 80% 15%, rgba(6, 182, 212, 0.12), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .manager-container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .portal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .portal-header h1 {
+      margin: 8px 0 0;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -.03em;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Filter & Search Bar */
+    .filter-card {
+      background: rgba(9, 23, 44, 0.7);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .filter-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      width: min(380px, 100%);
+      padding: 0 16px;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      background: rgba(4, 14, 30, 0.8);
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px 0;
+      border: 0;
+      background: transparent;
+      outline: 0;
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    .category-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .category-pills a {
+      padding: 8px 16px;
+      border-radius: 30px;
+      font: 600 12px var(--sans);
+      text-decoration: none;
+      border: 1px solid var(--border-glass);
+      color: var(--text-muted);
+      background: rgba(8, 22, 44, 0.6);
+      transition: all 0.2s;
+    }
+
+    .category-pills a:hover {
+      color: #ffffff;
+      border-color: rgba(91, 214, 255, 0.35);
+    }
+
+    .category-pills a.active {
+      background: linear-gradient(135deg, rgba(91, 214, 255, 0.2) 0%, rgba(138, 255, 242, 0.15) 100%);
+      border-color: var(--blue);
+      color: #ffffff;
+    }
+
+    /* Cards Grid */
+    .menu-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    .dish-card {
+      background: rgba(9, 23, 44, 0.75);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .dish-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-glow);
+    }
+
+    .dish-card.card-archived {
+      opacity: 0.6;
+      border-color: rgba(156, 163, 175, 0.3);
+    }
+
+    .dish-card.card-unavailable {
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .dish-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .dish-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .dish-price {
+      font: 700 17px var(--mono);
+      color: var(--gold-light);
+      white-space: nowrap;
+    }
+
+    .dish-category {
+      font: 600 10px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .dish-desc {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 0 0 16px;
+      flex: 1;
+    }
+
+    .dish-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 16px;
+      font-size: 12px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font: 700 11px var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .status-available {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-unavailable {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-archived {
+      background: rgba(156, 163, 175, 0.15);
+      color: #9ca3af;
+      border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+
+    .reason-box {
+      font-size: 11px;
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.08);
+      border-left: 3px solid #ef4444;
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .dish-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-edit {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font: 600 11px var(--mono);
+      background: rgba(91, 214, 255, 0.12);
+      border: 1px solid rgba(91, 214, 255, 0.35);
+      color: var(--cyan);
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-edit:hover {
+      background: rgba(91, 214, 255, 0.22);
+    }
+
+    .btn-delete {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font: 600 11px var(--mono);
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #f87171;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-delete:hover {
+      background: rgba(239, 68, 68, 0.22);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="manager-shell">
+    <div class="manager-container">
+      <div class="portal-header">
+        <div>
+          <p class="eyebrow"><a href="{% url 'restaurant:manager_dashboard' %}" style="color:var(--text-muted); text-decoration:none;">← MANAGER DASHBOARD</a> <span>• CATALOG</span></p>
+          <h1>Menu Management</h1>
+        </div>
+
+        <div class="header-actions">
+          <a class="button button-gold" href="{% url 'restaurant:manager_menu_add' %}">
+            <span>+ Add New Item</span>
+          </a>
+          <a class="button button-outline" href="{% url 'restaurant:menu' %}" target="_blank">
+            Customer View ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="category-pills">
+            <a href="?{% if search_query %}q={{ search_query }}&{% endif %}" class="{% if not selected_category %}active{% endif %}">
+              All Categories
+            </a>
+            {% for cat in categories %}
+              <a href="?category={{ cat.id }}{% if search_query %}&q={{ search_query }}{% endif %}" class="{% if selected_category == cat.id %}active{% endif %}">
+                {{ cat.name }}
+              </a>
+            {% endfor %}
+          </div>
+
+          <form method="GET" class="search-box">
+            {% if selected_category %}
+              <input type="hidden" name="category" value="{{ selected_category }}">
+            {% endif %}
+            <span style="color:var(--blue); margin-right:8px;">⌕</span>
+            <input type="search" name="q" placeholder="Search dish name or spice..." value="{{ search_query }}">
+          </form>
+        </div>
+
+        <!-- Secondary status filters -->
+        <div style="display: flex; gap: 10px; font-size: 12px; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
+          <span style="color: var(--text-dim); font-family: var(--mono); font-size: 11px;">STATUS:</span>
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if search_query %}q={{ search_query }}{% endif %}" style="color: {% if not selected_status %}var(--cyan){% else %}var(--text-muted){% endif %}; text-decoration: none;">All ({{ total_count }})</a>
+          <span style="color:var(--border-glass);">|</span>
+          <a href="?status=available{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" style="color: {% if selected_status == 'available' %}#34d399{% else %}var(--text-muted){% endif %}; text-decoration: none;">🟢 Available</a>
+          <span style="color:var(--border-glass);">|</span>
+          <a href="?status=unavailable{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" style="color: {% if selected_status == 'unavailable' %}#f87171{% else %}var(--text-muted){% endif %}; text-decoration: none;">🔴 Unavailable</a>
+          <span style="color:var(--border-glass);">|</span>
+          <a href="?status=archived{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" style="color: {% if selected_status == 'archived' %}#9ca3af{% else %}var(--text-muted){% endif %}; text-decoration: none;">⚪ Archived</a>
+        </div>
+      </div>
+
+      <!-- Dish Cards Grid -->
+      <div class="menu-cards-grid">
+        {% for item in items %}
+          <div class="dish-card card-3d {% if not item.is_active %}card-archived{% elif not item.is_available %}card-unavailable{% endif %}">
+            <div>
+              <div class="dish-top">
+                <h3 class="dish-title">{{ item.name }}</h3>
+                <span class="dish-price">₹ {{ item.price }}</span>
+              </div>
+              <span class="dish-category">{{ item.category.name }}</span>
+              <p class="dish-desc">{{ item.description }}</p>
+            </div>
+
+            <div>
+              {% if not item.is_available and item.availability_reason %}
+                <div class="reason-box">
+                  <b>Reason:</b> {{ item.availability_reason }}
+                </div>
+              {% endif %}
+
+              <div class="dish-meta">
+                <span>⏱ {{ item.preparation_time }} mins</span>
+                <div>
+                  {% if not item.is_active %}
+                    <span class="status-badge status-archived">⚪ Archived</span>
+                  {% elif item.is_available %}
+                    <span class="status-badge status-available">🟢 Available</span>
+                  {% else %}
+                    <span class="status-badge status-unavailable">🔴 Unavailable</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="dish-actions">
+                <a class="btn-edit" href="{% url 'restaurant:manager_menu_edit' item.id %}">
+                  Edit Item
+                </a>
+                <a class="btn-delete" href="{% url 'restaurant:manager_menu_delete' item.id %}">
+                  {% if not item.is_active %}Delete Permanently{% else %}Delete{% endif %}
+                </a>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div style="grid-column: 1 / -1; padding: 60px 24px; text-align: center; background: rgba(9, 23, 44, 0.4); border: 1px dashed rgba(121, 202, 255, 0.2); border-radius: var(--radius-lg);">
+            <p style="color: var(--text-muted); font-size: 16px; margin: 0 0 16px;">No menu items matched your filter criteria.</p>
+            <a class="button button-gold" href="{% url 'restaurant:manager_menu_add' %}">+ Add Menu Item</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endblock %}
+

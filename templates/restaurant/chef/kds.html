@@ -1,0 +1,187 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Kitchen Display System (KDS) | Chef Portal{% endblock %}
+
+{% block head %}
+  <style>
+    .kds-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(20, 184, 166, 0.12), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .kds-container {
+      max-width: 1280px;
+      margin: auto;
+    }
+
+    .kds-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .kds-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    .ticket-card {
+      background: rgba(9, 23, 44, 0.9);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-top: 4px solid var(--cyan);
+    }
+
+    .ticket-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ticket-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .ticket-meta {
+      font: 600 12px var(--mono);
+      color: var(--text-secondary);
+    }
+
+    .ticket-item {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ticket-item:last-child {
+      border-bottom: none;
+    }
+
+    .btn-ready {
+      background: #10b981;
+      color: #030813;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s ease;
+    }
+
+    .btn-ready:hover {
+      background: #34d399;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="kds-shell">
+  <div class="kds-container">
+
+    <div class="kds-header">
+      <div>
+        <span class="eyebrow" style="color: var(--cyan);">Live Kitchen Tickets</span>
+        <h1 style="font-size: 32px; font-weight: 800; color: #ffffff; margin: 4px 0;">Kitchen Display System (KDS)</h1>
+        <p style="color: var(--text-secondary); margin: 0;">Incoming waiter & table orders. Advance items when ready for collection.</p>
+      </div>
+      <div>
+        <a href="{% url 'restaurant:chef_menu_list' %}" class="button" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); color: var(--text-secondary);">
+          Dish Availability Toggles →
+        </a>
+      </div>
+    </div>
+
+    <!-- Active Tickets Grid -->
+    <div class="kds-grid">
+      {% for order in orders %}
+        <div class="ticket-card">
+          <div>
+            <div class="ticket-top">
+              <div>
+                <div class="ticket-title">Table {{ order.session.table.table_number }}</div>
+                <div class="ticket-meta">Ticket #{{ order.id }} • {{ order.created_at|date:"h:i A" }}</div>
+              </div>
+              <span class="status-badge" style="background: rgba(20, 184, 166, 0.15); color: var(--cyan); font-size: 11px;">
+                {{ order.get_status_display }}
+              </span>
+            </div>
+
+            {% if order.special_instructions %}
+              <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 4px; padding: 8px 12px; margin-bottom: 14px; font-size: 12px; color: #fbbf24;">
+                ⚠️ <b>Kitchen Note:</b> {{ order.special_instructions }}
+              </div>
+            {% endif %}
+
+            <div class="ticket-items-list">
+              {% for item in order.items.all %}
+                <div class="ticket-item">
+                  <div>
+                    <b style="color: #ffffff; font-size: 15px;">{{ item.quantity }}x {{ item.menu_item.name }}</b>
+                    {% if item.special_instructions %}
+                      <div style="font-size: 12px; color: #fbbf24;">Note: {{ item.special_instructions }}</div>
+                    {% endif %}
+                    <div style="font-size: 11px; color: var(--text-secondary);">Prep ~{{ item.menu_item.preparation_time }}m</div>
+                  </div>
+
+                  <div>
+                    {% if item.status == 'PREPARING' %}
+                      <form method="POST" action="{% url 'restaurant:chef_item_status' item.id %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="READY" />
+                        <button type="submit" class="btn-ready">Mark Ready 🛎️</button>
+                      </form>
+                    {% elif item.status == 'READY' %}
+                      <span style="color: #34d399; font-size: 12px; font-weight: 700;">Ready for Waiter</span>
+                    {% elif item.status == 'SERVED' %}
+                      <span style="color: var(--text-secondary); font-size: 12px;">Served ✓</span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div style="margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); font-size: 12px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+            <span>Waiter: {{ order.placed_by.username|default:"Floor Staff" }}</span>
+            <span>Guest: {{ order.session.guest_name }}</span>
+          </div>
+        </div>
+      {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 24px; background: rgba(9,23,44,0.6); border-radius: var(--radius-lg);">
+          <span style="font-size: 36px; display: block; margin-bottom: 12px;">👨‍🍳</span>
+          <h3 style="color: #ffffff; margin: 0 0 8px;">Kitchen Queue is Clear!</h3>
+          <p style="color: var(--text-secondary); font-size: 15px;">All placed orders have been prepared and served.</p>
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+

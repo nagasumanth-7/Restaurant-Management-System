@@ -1,3 +1,5 @@
+from decimal import Decimal
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -54,4 +56,256 @@ class Reservation(models.Model):
     @property
     def can_cancel(self):
         return self.status == "CONFIRMED" and not self.is_past
+
+
+# ==============================================================================
+# MENU MODELS
+# ==============================================================================
+
+class MenuCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "Menu Categories"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def slug_identifier(self):
+        return self.name.lower().replace("&", "and").replace(" ", "-")
+
+
+class MenuItem(models.Model):
+    category = models.ForeignKey(MenuCategory, on_delete=models.CASCADE, related_name="items")
+    name = models.CharField(max_length=150)
+    description = models.TextField(blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to="menu_images/", blank=True, null=True)
+    is_active = models.BooleanField(default=True, help_text="True if item exists on the restaurant menu; False if archived.")
+    is_available = models.BooleanField(default=True, help_text="True if item can currently be ordered from the kitchen.")
+    availability_reason = models.CharField(max_length=255, blank=True, help_text="Reason when marked unavailable (e.g. out of stock).")
+    preparation_time = models.PositiveIntegerField(default=15, help_text="Estimated preparation time in minutes.")
+    availability_updated_at = models.DateTimeField(null=True, blank=True)
+    availability_updated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="availability_updates"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["category__name", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.category.name}) - ₹{self.price}"
+
+    @property
+    def can_be_ordered(self):
+        return self.is_active and self.is_available
+
+    @property
+    def has_historical_orders(self):
+        return self.order_items.exists()
+
+
+# ==============================================================================
+# FUTURE SYSTEM ARCHITECTURE MODELS (TABLES, ORDERS, BILLING)
+# ==============================================================================
+
+class RestaurantTable(models.Model):
+    STATUS_CHOICES = [
+        ("AVAILABLE", "Available"),
+        ("RESERVED", "Reserved"),
+        ("OCCUPIED", "Occupied"),
+        ("BILL_PENDING", "Bill Pending"),
+        ("OUT_OF_SERVICE", "Out of Service"),
+    ]
+
+    AREA_CHOICES = [
+        ("INDOOR", "Main Dining Hall"),
+        ("TERRACE", "Outdoor Terrace"),
+        ("WINDOW", "Window View"),
+        ("BOOTH", "Private Booth"),
+    ]
+
+    table_number = models.CharField(max_length=20, unique=True)
+    capacity = models.PositiveIntegerField(default=4)
+    floor_area = models.CharField(max_length=20, choices=AREA_CHOICES, default="INDOOR")
+    qr_token = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="AVAILABLE")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["table_number"]
+
+    def __str__(self):
+        return f"Table {self.table_number} ({self.capacity} seats, {self.get_floor_area_display()}) - {self.status}"
+
+    @property
+    def current_session(self):
+        return self.sessions.filter(status="ACTIVE").first()
+
+
+class TableSession(models.Model):
+    STATUS_CHOICES = [
+        ("ACTIVE", "Active"),
+        ("COMPLETED", "Completed"),
+        ("CANCELLED", "Cancelled"),
+    ]
+
+    table = models.ForeignKey(RestaurantTable, on_delete=models.CASCADE, related_name="sessions")
+    reservation = models.ForeignKey(Reservation, on_delete=models.SET_NULL, null=True, blank=True, related_name="sessions")
+    customer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="table_sessions")
+    waiter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_sessions")
+    guest_name = models.CharField(max_length=150, blank=True)
+    guest_count = models.PositiveIntegerField(default=1)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="ACTIVE")
+    opened_at = models.DateTimeField(auto_now_add=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-opened_at"]
+
+    def __str__(self):
+        return f"Session #{self.id} on Table {self.table.table_number} ({self.status})"
+
+    @property
+    def running_subtotal(self):
+        subtotal = Decimal("0.00")
+        for order in self.orders.exclude(status="CANCELLED"):
+            for item in order.items.exclude(status="CANCELLED"):
+                subtotal += item.subtotal
+        return subtotal
+
+    @property
+    def total_items_count(self):
+        count = 0
+        for order in self.orders.exclude(status="CANCELLED"):
+            count += order.items.exclude(status="CANCELLED").count()
+        return count
+
+
+class Order(models.Model):
+    SOURCE_CHOICES = [
+        ("CUSTOMER", "Customer"),
+        ("WAITER", "Waiter"),
+    ]
+
+    STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("ACCEPTED", "Accepted"),
+        ("PREPARING", "Preparing"),
+        ("READY", "Ready"),
+        ("SERVED", "Served"),
+        ("CANCELLED", "Cancelled"),
+    ]
+
+    session = models.ForeignKey(TableSession, on_delete=models.CASCADE, related_name="orders")
+    placed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="placed_orders")
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default="CUSTOMER")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
+    special_instructions = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Order #{self.id} for Session #{self.session_id} [{self.source}] - {self.status}"
+
+    @property
+    def order_total(self):
+        return sum(item.subtotal for item in self.items.exclude(status="CANCELLED"))
+
+
+class OrderItem(models.Model):
+    STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("PREPARING", "Preparing"),
+        ("READY", "Ready"),
+        ("SERVED", "Served"),
+        ("CANCELLED", "Cancelled"),
+    ]
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    # Section 32: Use on_delete=models.PROTECT so historical menu items cannot be cascade deleted
+    menu_item = models.ForeignKey(MenuItem, on_delete=models.PROTECT, related_name="order_items")
+    quantity = models.PositiveIntegerField(default=1)
+    # Section 20: unit_price must be stored in OrderItem to freeze historical prices
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    special_instructions = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
+    started_at = models.DateTimeField(null=True, blank=True)
+    estimated_minutes = models.PositiveIntegerField(null=True, blank=True)
+    estimated_ready_at = models.DateTimeField(null=True, blank=True)
+    ready_at = models.DateTimeField(null=True, blank=True)
+    served_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.quantity}x {self.menu_item.name} in Order #{self.order_id}"
+
+    @property
+    def subtotal(self):
+        return self.quantity * self.unit_price
+
+
+class Bill(models.Model):
+    STATUS_CHOICES = [
+        ("UNPAID", "Unpaid"),
+        ("PAID", "Paid"),
+        ("VOID", "Void"),
+    ]
+
+    session = models.OneToOneField(TableSession, on_delete=models.CASCADE, related_name="bill")
+    cashier = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="generated_bills")
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    tip = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="UNPAID")
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Bill #{self.id} for Table {self.session.table.table_number} - ₹{self.total} ({self.status})"
+
+
+class Payment(models.Model):
+    METHOD_CHOICES = [
+        ("CASH", "Cash"),
+        ("UPI", "UPI"),
+        ("CARD", "Card"),
+    ]
+
+    STATUS_CHOICES = [
+        ("SUCCESS", "Success"),
+        ("FAILED", "Failed"),
+        ("REFUNDED", "Refunded"),
+    ]
+
+    bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name="payments")
+    processed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="processed_payments")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=METHOD_CHOICES, default="UPI")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="SUCCESS")
+    transaction_id = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment #{self.id} of ₹{self.amount} via {self.payment_method} ({self.status})"
 

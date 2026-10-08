@@ -1,0 +1,310 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Table {{ table.table_number }} | Waiter Portal{% endblock %}
+
+{% block head %}
+  <style>
+    .tdetail-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(96, 165, 250, 0.1), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .tdetail-container {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .back-nav {
+      margin-bottom: 24px;
+    }
+
+    .back-nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font: 600 13px var(--mono);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color .2s ease;
+    }
+
+    .back-nav a:hover {
+      color: #60a5fa;
+    }
+
+    .card-panel {
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      margin-bottom: 28px;
+    }
+
+    .tdetail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .status-badge {
+      font: 700 12px var(--mono);
+      padding: 6px 14px;
+      border-radius: 999px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .badge-AVAILABLE { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+    .badge-OCCUPIED { background: rgba(96, 165, 250, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.3); }
+    .badge-BILL_PENDING { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-RESERVED { background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.3); }
+
+    .item-status-pill {
+      font: 600 11px var(--mono);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .isp-PREPARING { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+    .isp-READY { background: rgba(52, 211, 153, 0.2); color: #34d399; font-weight: 700; }
+    .isp-SERVED { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+
+    .order-card {
+      background: rgba(4, 13, 26, 0.6);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .order-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .order-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .order-items-table th, .order-items-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .order-items-table th {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .btn-serve-sm {
+      background: #10b981;
+      color: #030813;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-serve-sm:hover { background: #34d399; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="tdetail-shell">
+  <div class="tdetail-container">
+
+    <div class="back-nav">
+      <a href="{% url 'restaurant:waiter_dashboard' %}">← Back to Floor Overview</a>
+    </div>
+
+    <!-- Table Header Panel -->
+    <div class="card-panel">
+      <div class="tdetail-header">
+        <div>
+          <span class="eyebrow" style="color: #60a5fa;">{{ table.capacity }} Seats • {{ table.get_floor_area_display }}</span>
+          <h1 style="margin: 4px 0; font-size: 32px; font-weight: 800; color: #ffffff;">Table {{ table.table_number }}</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span class="status-badge badge-{{ table.status }}">{{ table.get_status_display }}</span>
+        </div>
+      </div>
+
+      {% if session %}
+        <!-- Active Session Info -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div>
+            <span style="font-size: 12px; color: var(--text-secondary); display: block;">Guest Party</span>
+            <b style="font-size: 16px; color: #ffffff;">{{ session.guest_name }}</b>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--text-secondary); display: block;">Seated Count</span>
+            <b style="font-size: 16px; color: #ffffff;">{{ session.guest_count }} Guests</b>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--text-secondary); display: block;">Assigned Waiter</span>
+            <b style="font-size: 16px; color: #ffffff;">{{ session.waiter.get_full_name|default:session.waiter.username|default:"Unassigned" }}</b>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--text-secondary); display: block;">Running Subtotal</span>
+            <b style="font-size: 20px; color: var(--gold-light);">₹{{ session.running_subtotal }}</b>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px;">
+          <a href="{% url 'restaurant:waiter_take_order' table.id %}" class="button" style="background: linear-gradient(135deg, #2563eb, #3b82f6); border-color: #60a5fa; color: #ffffff;">
+            + Take New Order
+          </a>
+          {% if session.running_subtotal > 0 and table.status != 'BILL_PENDING' %}
+            <form method="POST" action="{% url 'restaurant:waiter_request_bill' table.id %}" style="margin: 0;">
+              {% csrf_token %}
+              <button type="submit" class="button" style="background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.4); color: #fbbf24;">
+                🧾 Request Bill for Cashier
+              </button>
+            </form>
+          {% elif table.status == 'BILL_PENDING' %}
+            <div style="display: inline-flex; align-items: center; padding: 10px 18px; background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: var(--radius-sm); color: #fbbf24; font-size: 13px; font-weight: 600;">
+              ⏳ Bill Sent to Cashier — Awaiting Payment Settlement
+            </div>
+            {% if bill %}
+              <a href="{% url 'restaurant:cashier_settle_bill' bill.id %}" class="button" style="background: rgba(52, 211, 153, 0.2); border-color: #34d399; color: #34d399;">
+                Go to Cashier Checkout →
+              </a>
+            {% endif %}
+          {% endif %}
+        </div>
+
+      {% else %}
+        <!-- Seating Form for Available Table -->
+        <div style="padding: 12px 0;">
+          <h3 style="margin-top: 0; color: #ffffff;">Seat Guests on Table {{ table.table_number }}</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">
+            Open an active dining session for walk-in guests or reservations.
+          </p>
+
+          <form method="POST" action="{% url 'restaurant:waiter_table_open' table.id %}">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px;">
+              <div>
+                <label style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">Guest Name / Party</label>
+                {{ open_form.guest_name }}
+              </div>
+              <div>
+                <label style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">Party Size</label>
+                {{ open_form.guest_count }}
+              </div>
+            </div>
+            <button type="submit" class="button" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: #ffffff;">
+              Seat & Open Table Session →
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if session %}
+      <!-- Placed Orders Section -->
+      <div class="card-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="font-size: 22px; font-weight: 700; color: #ffffff; margin: 0;">Table Orders & Preparation</h2>
+          <span style="font-size: 14px; color: var(--text-secondary);">{{ orders|length }} order(s) placed</span>
+        </div>
+
+        {% for order in orders %}
+          <div class="order-card">
+            <div class="order-card-header">
+              <div>
+                <b style="color: #ffffff;">Order #{{ order.id }}</b>
+                <span style="margin-left: 10px;">{{ order.created_at|date:"h:i A" }}</span>
+                {% if order.special_instructions %}
+                  <span style="margin-left: 10px; color: #fbbf24;">• Note: {{ order.special_instructions }}</span>
+                {% endif %}
+              </div>
+              <span class="status-badge" style="background: rgba(255,255,255,0.06); color: var(--text-secondary);">
+                {{ order.get_status_display }}
+              </span>
+            </div>
+
+            <table class="order-items-table">
+              <thead>
+                <tr>
+                  <th>Dish</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Subtotal</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in order.items.all %}
+                  <tr>
+                    <td>
+                      <b style="color: #ffffff;">{{ item.menu_item.name }}</b>
+                      {% if item.special_instructions %}
+                        <div style="font-size: 12px; color: #fbbf24;">{{ item.special_instructions }}</div>
+                      {% endif %}
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>₹{{ item.unit_price }}</td>
+                    <td style="color: var(--gold-light); font-weight: 600;">₹{{ item.subtotal }}</td>
+                    <td>
+                      <span class="item-status-pill isp-{{ item.status }}">{{ item.get_status_display }}</span>
+                    </td>
+                    <td style="text-align: right;">
+                      {% if item.status == 'READY' %}
+                        <form method="POST" action="{% url 'restaurant:waiter_serve_item' item.id %}" style="display: inline;">
+                          {% csrf_token %}
+                          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                          <button type="submit" class="btn-serve-sm">Serve ✓</button>
+                        </form>
+                      {% elif item.status == 'SERVED' %}
+                        <span style="color: var(--text-secondary); font-size: 12px;">Served</span>
+                      {% else %}
+                        <span style="color: #fbbf24; font-size: 12px;">Cooking...</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% empty %}
+          <div style="text-align: center; padding: 36px 16px;">
+            <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 16px;">
+              No dishes have been ordered for this table yet.
+            </p>
+            <a href="{% url 'restaurant:waiter_take_order' table.id %}" class="button">
+              + Take First Order
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+

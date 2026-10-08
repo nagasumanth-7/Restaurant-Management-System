@@ -76,11 +76,12 @@ class SignUpForm(forms.Form):
 
 
 class LoginForm(forms.Form):
-    email = forms.EmailField(
+    email = forms.CharField(
+        label="Email or Username",
         required=True,
-        widget=forms.EmailInput(attrs={
-            "placeholder": "you@example.com",
-            "autocomplete": "email",
+        widget=forms.TextInput(attrs={
+            "placeholder": "you@example.com or staff username",
+            "autocomplete": "username",
             "class": "form-control",
         }),
     )
@@ -160,4 +161,141 @@ class ReservationForm(forms.ModelForm):
         if len(digits) < 7:
             raise forms.ValidationError("Please enter a valid phone number.")
         return phone
+
+
+class MenuItemForm(forms.ModelForm):
+    class Meta:
+        from .models import MenuItem
+        model = MenuItem
+        fields = [
+            "category",
+            "name",
+            "description",
+            "price",
+            "image",
+            "preparation_time",
+            "is_available",
+            "availability_reason",
+        ]
+        widgets = {
+            "category": forms.Select(attrs={"class": "form-control"}),
+            "name": forms.TextInput(attrs={"placeholder": "e.g. Andhra Chicken 65", "class": "form-control"}),
+            "description": forms.Textarea(attrs={
+                "rows": 3,
+                "placeholder": "Dish description, aromatic spices, origin...",
+                "class": "form-control",
+            }),
+            "price": forms.NumberInput(attrs={"min": "0", "step": "0.01", "placeholder": "290.00", "class": "form-control"}),
+            "image": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "preparation_time": forms.NumberInput(attrs={"min": "1", "max": "180", "placeholder": "15", "class": "form-control"}),
+            "is_available": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "availability_reason": forms.TextInput(attrs={"placeholder": "Optional reason if unavailable (e.g. stock finished)", "class": "form-control"}),
+        }
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name", "").strip()
+        if not name:
+            raise forms.ValidationError("Menu item name is required.")
+        return name
+
+    def clean_price(self):
+        price = self.cleaned_data.get("price")
+        if price is None:
+            raise forms.ValidationError("Price is required.")
+        if price < 0:
+            raise forms.ValidationError("Price must be a positive number (>= 0).")
+        return price
+
+    def clean_preparation_time(self):
+        prep = self.cleaned_data.get("preparation_time")
+        if prep is None:
+            raise forms.ValidationError("Preparation time is required.")
+        if prep < 0:
+            raise forms.ValidationError("Preparation time cannot be negative.")
+        return prep
+
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        if image and hasattr(image, "name"):
+            valid_extensions = [".jpg", ".jpeg", ".png", ".webp", ".avif"]
+            extension = image.name.lower().rsplit(".", 1)[-1] if "." in image.name else ""
+            if f".{extension}" not in valid_extensions:
+                raise forms.ValidationError("Invalid image format. Allowed: JPG, PNG, WEBP, AVIF.")
+            # Size check: 5MB limit
+            if image.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("Image file size exceeds the 5MB limit.")
+        return image
+
+
+class ChefAvailabilityForm(forms.Form):
+    is_available = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))
+    availability_reason = forms.CharField(
+        required=False,
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            "placeholder": "Reason if marking unavailable (e.g. stock finished, preparation prep delay)",
+            "class": "form-control",
+        }),
+    )
+
+
+class TableOpenForm(forms.Form):
+    guest_name = forms.CharField(
+        required=False,
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            "placeholder": "Guest / Party Name (e.g. Sharma Family)",
+            "class": "form-control",
+        }),
+    )
+    guest_count = forms.IntegerField(
+        required=True,
+        min_value=1,
+        initial=2,
+        widget=forms.NumberInput(attrs={
+            "placeholder": "Number of guests",
+            "class": "form-control",
+        }),
+    )
+
+
+class PaymentProcessForm(forms.Form):
+    payment_method = forms.ChoiceField(
+        choices=[
+            ("UPI", "UPI / QR Scanner"),
+            ("CASH", "Cash"),
+            ("CARD", "Credit / Debit Card"),
+        ],
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    amount_paid = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+    )
+    discount_pct = forms.DecimalField(
+        required=False,
+        initial=0,
+        min_value=0,
+        max_value=100,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "0%", "step": "0.5"}),
+    )
+    tip_amount = forms.DecimalField(
+        required=False,
+        initial=0,
+        min_value=0,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "₹0.00", "step": "10"}),
+    )
+    transaction_id = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            "placeholder": "Transaction ref / UPI UTR / Card Auth code (optional)",
+            "class": "form-control",
+        }),
+    )
+
+
 

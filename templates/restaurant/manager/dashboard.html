@@ -1,0 +1,336 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Manager Portal | Food Waves Dining{% endblock %}
+
+{% block head %}
+  <style>
+    .manager-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.12), transparent 45%),
+        radial-gradient(circle at 15% 75%, rgba(243, 194, 113, 0.08), transparent 40%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .manager-container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .portal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .portal-header h1 {
+      margin: 8px 0 0;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      color: #ffffff;
+    }
+
+    .portal-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: rgba(9, 23, 44, 0.75);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-glow);
+    }
+
+    .stat-label {
+      font: 600 11px var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font: 800 36px var(--sans);
+      color: #ffffff;
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 8px;
+    }
+
+    /* Quick Action Banners */
+    .actions-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+
+    /* Section Cards */
+    .content-box {
+      background: rgba(9, 23, 44, 0.7);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-3d);
+      backdrop-filter: blur(20px);
+    }
+
+    .box-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .box-top h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* Table Styling */
+    .data-table-wrap {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      padding: 14px 16px;
+      color: var(--text-muted);
+      font: 600 11px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .data-table td {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #d1d5db;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(91, 214, 255, 0.03);
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font: 700 10px var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .badge-available {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .badge-unavailable {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .badge-archived {
+      background: rgba(156, 163, 175, 0.15);
+      color: #9ca3af;
+      border: 1px solid rgba(156, 163, 175, 0.35);
+    }
+
+    .action-links {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .action-links a {
+      font: 600 12px var(--mono);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .link-edit {
+      color: var(--blue);
+    }
+    .link-edit:hover {
+      color: var(--cyan);
+      text-decoration: underline;
+    }
+
+    .link-delete {
+      color: #f87171;
+    }
+    .link-delete:hover {
+      color: #ef4444;
+      text-decoration: underline;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="manager-shell">
+    <div class="manager-container">
+      <div class="portal-header">
+        <div>
+          <p class="eyebrow">EXECUTIVE OPERATIONS <span>• MANAGER PORTAL</span></p>
+          <h1>Restaurant Menu Management</h1>
+        </div>
+
+        <div class="portal-nav">
+          <a class="button button-gold" href="{% url 'restaurant:manager_menu_add' %}">
+            <span>+ Add New Item</span>
+          </a>
+          <a class="button button-outline" href="{% url 'restaurant:manager_menu_list' %}">
+            Manage Menu Items →
+          </a>
+          <a class="button button-outline" href="{% url 'restaurant:chef_dashboard' %}" style="border-color: rgba(138, 255, 242, 0.4);">
+            Chef View →
+          </a>
+        </div>
+      </div>
+
+      <!-- Overview Metrics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Catalog</div>
+          <div class="stat-value">{{ total_items }}</div>
+          <div class="stat-sub">Across {{ total_categories }} categories</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">🟢 Available to Order</div>
+          <div class="stat-value" style="color: #34d399;">{{ available_items }}</div>
+          <div class="stat-sub">Live in customer menu</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">🔴 Unavailable / Out of Stock</div>
+          <div class="stat-value" style="color: #f87171;">{{ unavailable_items }}</div>
+          <div class="stat-sub">Hidden from ordering</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">⚪ Archived Dishes</div>
+          <div class="stat-value" style="color: #9ca3af;">{{ archived_items }}</div>
+          <div class="stat-sub">Preserved for order history</div>
+        </div>
+      </div>
+
+      <!-- Recent Menu Items -->
+      <div class="content-box">
+        <div class="box-top">
+          <div>
+            <h2>Recently Updated Items</h2>
+            <p style="color: var(--text-muted); font-size: 13px; margin: 4px 0 0;">Overview of current culinary offerings.</p>
+          </div>
+          <a class="button button-small button-outline" href="{% url 'restaurant:manager_menu_list' %}">
+            View All {{ total_items }} Items →
+          </a>
+        </div>
+
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Preparation</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in recent_items %}
+                <tr>
+                  <td>
+                    <b style="color: #ffffff;">{{ item.name }}</b>
+                    {% if item.availability_reason and not item.is_available %}
+                      <div style="font-size: 11px; color: #f87171; margin-top: 2px;">
+                        Reason: {{ item.availability_reason }}
+                      </div>
+                    {% endif %}
+                  </td>
+                  <td>{{ item.category.name }}</td>
+                  <td><b style="color: var(--gold-light); font-family: var(--mono);">₹ {{ item.price }}</b></td>
+                  <td>⏱ {{ item.preparation_time }} mins</td>
+                  <td>
+                    {% if not item.is_active %}
+                      <span class="badge-status badge-archived">Archived</span>
+                    {% elif item.is_available %}
+                      <span class="badge-status badge-available">Available</span>
+                    {% else %}
+                      <span class="badge-status badge-unavailable">Unavailable</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="action-links">
+                      <a class="link-edit" href="{% url 'restaurant:manager_menu_edit' item.id %}">Edit</a>
+                      <span style="color: var(--text-dim);">|</span>
+                      <a class="link-delete" href="{% url 'restaurant:manager_menu_delete' item.id %}">Delete</a>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 36px; color: var(--text-muted);">
+                    No menu items found. <a href="{% url 'restaurant:manager_menu_add' %}" style="color: var(--blue);">Add the first item</a>.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+

@@ -1,0 +1,204 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Kitchen Operations | Chef Portal{% endblock %}
+
+{% block head %}
+  <style>
+    .chef-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(20, 184, 166, 0.14), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .chef-container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .chef-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .chef-header h1 {
+      margin: 8px 0 0;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -.03em;
+    }
+
+    /* Stats Grid */
+    .chef-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    .chef-stat-card {
+      background: rgba(9, 23, 44, 0.75);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+    }
+
+    .stat-label {
+      font: 600 11px var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .stat-val {
+      font: 800 36px var(--sans);
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    /* Out of Stock Card */
+    .stock-box {
+      background: rgba(9, 23, 44, 0.75);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-3d);
+    }
+
+    .stock-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stock-header h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .unavailable-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .unavailable-item-card {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-md);
+      padding: 18px;
+    }
+
+    .unavailable-item-card h3 {
+      margin: 0 0 6px;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .unavailable-item-card p {
+      margin: 0 0 14px;
+      color: #f87171;
+      font-size: 12px;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="chef-shell">
+    <div class="chef-container">
+      <div class="chef-header">
+        <div>
+          <p class="eyebrow">KITCHEN THEATER <span>• CHEF PORTAL</span></p>
+          <h1>Kitchen Menu Availability</h1>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <a class="button button-gold" href="{% url 'restaurant:chef_menu_list' %}">
+            <span>Manage Food Availability →</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Live Kitchen Counts -->
+      <div class="chef-stats">
+        <div class="chef-stat-card">
+          <div class="stat-label">Active Recipes</div>
+          <div class="stat-val">{{ total_active }}</div>
+        </div>
+
+        <div class="chef-stat-card">
+          <div class="stat-label">🟢 Ready in Kitchen</div>
+          <div class="stat-val" style="color: #34d399;">{{ available_count }}</div>
+        </div>
+
+        <div class="chef-stat-card">
+          <div class="stat-label">🔴 Currently Sold Out</div>
+          <div class="stat-val" style="color: #f87171;">{{ unavailable_count }}</div>
+        </div>
+      </div>
+
+      <!-- Out of stock callout -->
+      <div class="stock-box">
+        <div class="stock-header">
+          <div>
+            <h2>Sold Out Dishes ({{ unavailable_count }})</h2>
+            <p style="color: var(--text-muted); font-size: 13px; margin: 4px 0 0;">These dishes are currently disabled from new customer orders.</p>
+          </div>
+          <a class="button button-outline button-small" href="{% url 'restaurant:chef_menu_list' %}?status=unavailable">
+            Open Availability Board →
+          </a>
+        </div>
+
+        {% if unavailable_items %}
+          <div class="unavailable-list">
+            {% for item in unavailable_items %}
+              <div class="unavailable-item-card">
+                <h3>{{ item.name }}</h3>
+                <small style="color: var(--text-dim); font-family: var(--mono); text-transform: uppercase;">{{ item.category.name }}</small>
+                <p>
+                  {% if item.availability_reason %}
+                    <b>Reason:</b> {{ item.availability_reason }}
+                  {% else %}
+                    No specific reason noted.
+                  {% endif %}
+                </p>
+                <form method="POST" action="{% url 'restaurant:chef_menu_toggle_availability' item.id %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="mark_available">
+                  <button class="button button-small button-outline" style="width: 100%; border-color: rgba(52, 211, 153, 0.4); color: #34d399;" type="submit">
+                    ✓ Mark Available (Restocked)
+                  </button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="padding: 36px; text-align: center; background: rgba(16, 185, 129, 0.06); border: 1px dashed rgba(16, 185, 129, 0.25); border-radius: var(--radius-md);">
+            <p style="color: #34d399; font-size: 15px; margin: 0;">All {{ total_active }} active menu dishes are fully stocked and available in the kitchen!</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}
+

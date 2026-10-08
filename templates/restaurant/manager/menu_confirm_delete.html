@@ -1,0 +1,153 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Confirm Delete: {{ item.name }} | Manager Portal{% endblock %}
+
+{% block head %}
+  <style>
+    .delete-shell {
+      min-height: calc(100vh - 170px);
+      padding: 150px max(6vw, 24px) 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: 
+        radial-gradient(circle at 50% 30%, rgba(239, 68, 68, 0.12), transparent 50%),
+        linear-gradient(180deg, #030813 0%, #061124 100%);
+    }
+
+    .delete-card {
+      max-width: 540px;
+      width: 100%;
+      background: rgba(9, 23, 44, 0.9);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: var(--radius-xl);
+      padding: 44px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(239, 68, 68, 0.15);
+      backdrop-filter: blur(24px);
+      text-align: center;
+    }
+
+    .warning-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #f87171;
+      font-size: 32px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
+    }
+
+    .delete-card h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 12px;
+    }
+
+    .item-preview {
+      background: rgba(4, 14, 30, 0.7);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin: 24px 0;
+      text-align: left;
+    }
+
+    .item-preview b {
+      color: #ffffff;
+      font-size: 16px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .item-preview span {
+      color: var(--gold-light);
+      font: 700 14px var(--mono);
+    }
+
+    .order-warning-box {
+      background: rgba(243, 194, 113, 0.12);
+      border: 1px solid rgba(243, 194, 113, 0.35);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      color: var(--gold-light);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+
+    .delete-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #ffffff !important;
+      border: 0;
+      padding: 12px 24px;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="delete-shell">
+    <div class="delete-card card-3d">
+      <div class="warning-icon">⚠</div>
+
+      <h1>Remove Menu Item</h1>
+      <p style="color: var(--text-muted); font-size: 14px; margin: 0;">
+        Are you sure you want to remove this dish from the active catalog?
+      </p>
+
+      <div class="item-preview">
+        <b>{{ item.name }}</b>
+        <span>₹ {{ item.price }}</span> &bull;
+        <small style="color: var(--cyan); font-family: var(--mono);">{{ item.category.name }}</small>
+        {% if item.description %}
+          <p style="color: var(--text-dim); font-size: 12px; margin: 6px 0 0;">{{ item.description }}</p>
+        {% endif %}
+      </div>
+
+      {% if has_orders %}
+        <!-- Section 31 & 32: Preservation of Historical Orders -->
+        <div class="order-warning-box">
+          <b>✦ Historical Preservation Notice:</b><br>
+          This menu item has been used in previous customer or waiter orders. To preserve historical bills and reports, it will be <b>archived</b> (hidden from active menu) rather than permanently erased from the database.
+        </div>
+      {% else %}
+        <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 20px;">
+          This item has never been ordered and will be permanently deleted from the database.
+        </p>
+      {% endif %}
+
+      <form method="POST">
+        {% csrf_token %}
+        <div class="delete-actions">
+          <a class="button button-outline" href="{% url 'restaurant:manager_menu_list' %}">Cancel</a>
+          <button class="btn-danger" type="submit">
+            {% if has_orders %}Confirm Archive{% else %}Permanently Delete{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}
+

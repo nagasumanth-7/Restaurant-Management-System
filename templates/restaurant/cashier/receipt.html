@@ -1,0 +1,242 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Tax Invoice Receipt #{{ bill.id }} | Food Waves{% endblock %}
+
+{% block head %}
+  <style>
+    .receipt-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(52, 211, 153, 0.08), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .receipt-container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .invoice-card {
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: var(--radius-lg);
+      padding: 40px 36px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      font-family: var(--sans);
+    }
+
+    .invoice-header {
+      text-align: center;
+      padding-bottom: 24px;
+      border-bottom: 2px dashed #cbd5e1;
+      margin-bottom: 24px;
+    }
+
+    .invoice-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      margin: 6px 0 2px;
+      color: #020617;
+    }
+
+    .invoice-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .invoice-table th, .invoice-table td {
+      padding: 8px 4px;
+      text-align: left;
+    }
+
+    .invoice-table th {
+      border-bottom: 1px solid #94a3b8;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .invoice-totals {
+      border-top: 2px dashed #cbd5e1;
+      padding-top: 16px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .inv-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    .inv-row.grand-total {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      border-top: 2px solid #0f172a;
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+
+    .payment-tag {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-top: 18px;
+      font-size: 12px;
+      color: #334155;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .invoice-card, .invoice-card * {
+        visibility: visible;
+      }
+      .invoice-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none;
+        padding: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="receipt-shell">
+  <div class="receipt-container">
+
+    <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <a href="{% url 'restaurant:cashier_dashboard' %}" style="color: var(--text-secondary); text-decoration: none; font-size: 13px;">
+        ← Back to Cashier Dashboard
+      </a>
+      <button onclick="window.print()" class="button" style="background: #34d399; color: #030813; font-weight: 700; border: none; padding: 10px 20px;">
+        🖨️ Print Tax Invoice
+      </button>
+    </div>
+
+    <!-- Printable Receipt Card -->
+    <div class="invoice-card">
+      <div class="invoice-header">
+        <div style="font-size: 28px; line-height: 1;">≈</div>
+        <div class="invoice-title">FOOD WAVES</div>
+        <div style="font-size: 13px; color: #64748b;">Fine Dining & Coastal Flavors</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">GSTIN: 36ABCDE1234F1Z5 • FSSAI Lic: 10019047001423</div>
+      </div>
+
+      <div class="invoice-meta-grid">
+        <div>
+          <b>Invoice #:</b> FW-BILL-{{ bill.id }}<br>
+          <b>Table:</b> Table {{ session.table.table_number }}<br>
+          <b>Guest:</b> {{ session.guest_name }}
+        </div>
+        <div style="text-align: right;">
+          <b>Date:</b> {{ bill.created_at|date:"d M Y, h:i A" }}<br>
+          <b>Cashier:</b> {{ bill.cashier.username|default:"Front Desk" }}<br>
+          <b>Status:</b> <span style="color: #16a34a; font-weight: 700;">PAID IN FULL</span>
+        </div>
+      </div>
+
+      <!-- Itemized Table -->
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th style="text-align: center;">Qty</th>
+            <th style="text-align: right;">Rate</th>
+            <th style="text-align: right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+            {% for item in order.items.all %}
+              <tr>
+                <td><b>{{ item.menu_item.name }}</b></td>
+                <td style="text-align: center;">{{ item.quantity }}</td>
+                <td style="text-align: right;">₹{{ item.unit_price }}</td>
+                <td style="text-align: right; font-weight: 600;">₹{{ item.subtotal }}</td>
+              </tr>
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Totals & GST Breakup -->
+      <div class="invoice-totals">
+        <div class="inv-row">
+          <span>Subtotal:</span>
+          <span>₹{{ bill.subtotal }}</span>
+        </div>
+        {% if bill.discount > 0 %}
+          <div class="inv-row" style="color: #16a34a;">
+            <span>Promotional Discount:</span>
+            <span>-₹{{ bill.discount }}</span>
+          </div>
+        {% endif %}
+        <div class="inv-row">
+          <span>CGST (2.5%):</span>
+          <span>₹{{ bill.tax|floatformat:2 }}</span>
+        </div>
+        <div class="inv-row">
+          <span>SGST (2.5%):</span>
+          <span>₹{{ bill.tax|floatformat:2 }}</span>
+        </div>
+        {% if bill.tip > 0 %}
+          <div class="inv-row">
+            <span>Gratuity:</span>
+            <span>+₹{{ bill.tip }}</span>
+          </div>
+        {% endif %}
+        <div class="inv-row grand-total">
+          <span>Total Amount Paid:</span>
+          <span>₹{{ bill.total }}</span>
+        </div>
+      </div>
+
+      <!-- Payment Settlement Details -->
+      {% for payment in payments %}
+        <div class="payment-tag">
+          <b>Settlement Record:</b> ₹{{ payment.amount }} via {{ payment.get_payment_method_display }}
+          {% if payment.transaction_id %}
+            (Ref: {{ payment.transaction_id }})
+          {% endif %}
+          <br>
+          <span style="font-size: 11px; color: #64748b;">Processed at {{ payment.created_at|date:"h:i:s A" }} by {{ payment.processed_by.username|default:"Cashier" }}</span>
+        </div>
+      {% endfor %}
+
+      <div style="text-align: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
+        Thank you for dining with Food Waves! Please visit us again.
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+

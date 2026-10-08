@@ -1,0 +1,152 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Daily Financial Settlement Report | Cashier POS{% endblock %}
+
+{% block head %}
+  <style>
+    .rep-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(52, 211, 153, 0.1), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .rep-container {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .rep-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .rep-card {
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      margin-bottom: 28px;
+    }
+
+    .rep-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .rep-table th, .rep-table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .rep-table th {
+      color: var(--text-secondary);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="rep-shell">
+  <div class="rep-container">
+
+    <div style="margin-bottom: 20px;">
+      <a href="{% url 'restaurant:cashier_dashboard' %}" style="color: var(--text-secondary); text-decoration: none; font-size: 13px;">
+        ← Back to POS Dashboard
+      </a>
+    </div>
+
+    <div class="rep-header">
+      <div>
+        <span class="eyebrow" style="color: #34d399;">Financial Audits & Settlements</span>
+        <h1 style="font-size: 32px; font-weight: 800; color: #ffffff; margin: 4px 0;">Daily Sales Report</h1>
+        <p style="color: var(--text-secondary); margin: 0;">Date: {{ summary.date|date:"F d, Y" }}</p>
+      </div>
+      <div>
+        <form method="GET" style="display: flex; gap: 10px; align-items: center;">
+          <input type="date" name="date" value="{{ selected_date }}" class="form-control" style="padding: 8px 12px;" />
+          <button type="submit" class="button" style="padding: 8px 16px;">Filter Date</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 28px;">
+      <div class="rep-card" style="margin-bottom: 0;">
+        <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-family: var(--mono); display: block; margin-bottom: 6px;">Total Revenue</span>
+        <b style="font-size: 28px; color: var(--gold-light);">₹{{ summary.total_revenue }}</b>
+        <span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 4px;">{{ summary.total_transactions }} transactions</span>
+      </div>
+      <div class="rep-card" style="margin-bottom: 0;">
+        <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-family: var(--mono); display: block; margin-bottom: 6px;">UPI / QR</span>
+        <b style="font-size: 28px; color: #60a5fa;">₹{{ summary.upi_total }}</b>
+      </div>
+      <div class="rep-card" style="margin-bottom: 0;">
+        <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-family: var(--mono); display: block; margin-bottom: 6px;">Cash</span>
+        <b style="font-size: 28px; color: #34d399;">₹{{ summary.cash_total }}</b>
+      </div>
+      <div class="rep-card" style="margin-bottom: 0;">
+        <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-family: var(--mono); display: block; margin-bottom: 6px;">Card</span>
+        <b style="font-size: 28px; color: #a78bfa;">₹{{ summary.card_total }}</b>
+      </div>
+    </div>
+
+    <!-- Payment Journal Ledger -->
+    <div class="rep-card">
+      <h3 style="margin-top: 0; color: #ffffff; margin-bottom: 18px;">Payment Transaction Journal</h3>
+
+      {% if summary.payments %}
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Table</th>
+              <th>Method</th>
+              <th>Reference</th>
+              <th>Processed By</th>
+              <th style="text-align: right;">Amount</th>
+              <th style="text-align: right;">Receipt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in summary.payments %}
+              <tr>
+                <td>{{ payment.created_at|date:"h:i:s A" }}</td>
+                <td><b style="color: #ffffff;">Table {{ payment.bill.session.table.table_number }}</b></td>
+                <td>{{ payment.get_payment_method_display }}</td>
+                <td style="color: var(--text-secondary);">{{ payment.transaction_id|default:"-" }}</td>
+                <td>{{ payment.processed_by.username|default:"Cashier" }}</td>
+                <td style="text-align: right; color: var(--gold-light); font-weight: 700;">₹{{ payment.amount }}</td>
+                <td style="text-align: right;">
+                  <a href="{% url 'restaurant:cashier_receipt' payment.bill.id %}" style="color: #34d399; text-decoration: none; font-size: 12px;">
+                    View Invoice ↗
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 24px;">No payments recorded for this date.</p>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+

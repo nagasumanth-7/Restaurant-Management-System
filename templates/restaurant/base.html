@@ -45,6 +45,12 @@
         <a href="{% url 'restaurant:reservation' %}">Book Table</a>
         {% if user.is_authenticated %}
           <a href="{% url 'restaurant:booking_history' %}">My Bookings</a>
+          {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'restaurant:manager_dashboard' %}" style="color: var(--gold-light);">Manager</a>
+            <a href="{% url 'restaurant:chef_dashboard' %}" style="color: var(--cyan);">Chef</a>
+            <a href="{% url 'restaurant:waiter_dashboard' %}" style="color: #60a5fa;">Waiter</a>
+            <a href="{% url 'restaurant:cashier_dashboard' %}" style="color: #34d399;">Cashier</a>
+          {% endif %}
         {% endif %}
         <a href="{% url 'restaurant:home' %}#about">About</a>
       </nav>
@@ -83,6 +89,12 @@
         <a href="{% url 'restaurant:reservation' %}">Book a Table <span>→</span></a>
         {% if user.is_authenticated %}
           <a href="{% url 'restaurant:booking_history' %}">My Bookings <span>→</span></a>
+          {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'restaurant:manager_dashboard' %}" style="color: var(--gold-light);">Manager Panel <span>→</span></a>
+            <a href="{% url 'restaurant:chef_dashboard' %}" style="color: var(--cyan);">Chef Kitchen <span>→</span></a>
+            <a href="{% url 'restaurant:waiter_dashboard' %}" style="color: #60a5fa;">Waiter Floor <span>→</span></a>
+            <a href="{% url 'restaurant:cashier_dashboard' %}" style="color: #34d399;">Cashier POS <span>→</span></a>
+          {% endif %}
           <a href="{% url 'restaurant:logout' %}" style="color: #f87272;">Log out <span>→</span></a>
         {% else %}
           <a href="{% url 'restaurant:login' %}">Log in <span>→</span></a>

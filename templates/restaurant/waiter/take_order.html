@@ -1,0 +1,275 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Take Order - Table {{ table.table_number }} | Waiter Portal{% endblock %}
+
+{% block head %}
+  <style>
+    .order-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 120px;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(96, 165, 250, 0.1), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .order-container {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .category-nav {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 28px;
+    }
+
+    .cat-btn {
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: rgba(9, 23, 44, 0.7);
+      border: 1px solid var(--border-glass);
+      color: var(--text-secondary);
+      font: 600 13px var(--sans);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .2s ease;
+    }
+
+    .cat-btn:hover, .cat-btn.active {
+      background: rgba(37, 99, 235, 0.3);
+      border-color: #60a5fa;
+      color: #ffffff;
+    }
+
+    .dish-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    .dish-card {
+      background: rgba(9, 23, 44, 0.85);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform .2s ease;
+    }
+
+    .dish-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .dish-card.unavailable {
+      opacity: 0.55;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .dish-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .dish-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .dish-price {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold-light);
+    }
+
+    .dish-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .dish-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .qty-input {
+      width: 70px;
+      text-align: center;
+      background: rgba(3, 8, 19, 0.7);
+      border: 1px solid var(--border-glass);
+      color: #ffffff;
+      border-radius: var(--radius-sm);
+      padding: 8px 4px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .notes-input {
+      flex: 1;
+      background: rgba(3, 8, 19, 0.7);
+      border: 1px solid var(--border-glass);
+      color: #ffffff;
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .order-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(90%, 900px);
+      background: rgba(6, 17, 36, 0.95);
+      border: 1px solid #60a5fa;
+      border-radius: var(--radius-lg);
+      padding: 16px 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(96, 165, 250, 0.2);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="order-shell">
+  <div class="order-container">
+
+    <div style="margin-bottom: 20px;">
+      <a href="{% url 'restaurant:waiter_table_detail' table.id %}" style="color: var(--text-secondary); text-decoration: none; font-size: 13px;">
+        ← Back to Table {{ table.table_number }}
+      </a>
+    </div>
+
+    <div class="order-header">
+      <div>
+        <span class="eyebrow" style="color: #60a5fa;">Table {{ table.table_number }} • {{ session.guest_name }}</span>
+        <h1 style="margin: 4px 0; font-size: 32px; font-weight: 800; color: #ffffff;">Table-Side Ordering</h1>
+      </div>
+      <div>
+        <span style="font-size: 14px; color: var(--text-secondary);">Select dishes & quantities below</span>
+      </div>
+    </div>
+
+    <!-- Category Filter Bar -->
+    <div class="category-nav">
+      <button type="button" class="cat-btn active" onclick="filterDishes('all')">All Dishes</button>
+      {% for category in categories %}
+        <button type="button" class="cat-btn" onclick="filterDishes('{{ category.slug_identifier }}')">
+          {{ category.name }}
+        </button>
+      {% endfor %}
+    </div>
+
+    <form method="POST" id="orderForm">
+      {% csrf_token %}
+
+      <div class="dish-grid">
+        {% for item in items %}
+          <div class="dish-card {% if not item.is_available %}unavailable{% endif %}" data-cat="{{ item.category.slug_identifier }}">
+            <div>
+              <div class="dish-top">
+                <div>
+                  <div class="dish-title">{{ item.name }}</div>
+                  <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">{{ item.category.name }} • {{ item.preparation_time }}m</span>
+                </div>
+                <div class="dish-price">₹{{ item.price }}</div>
+              </div>
+              <div class="dish-desc">{{ item.description|truncatewords:14 }}</div>
+            </div>
+
+            <div>
+              {% if item.is_available %}
+                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Quantity & Cooking Notes:</div>
+                <div class="dish-controls">
+                  <input type="number" name="qty_{{ item.id }}" min="0" max="20" placeholder="0" class="qty-input" />
+                  <input type="text" name="notes_{{ item.id }}" placeholder="e.g. Less spicy, crispy" class="notes-input" />
+                </div>
+              {% else %}
+                <div style="padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-sm); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87272; font-size: 12px; font-weight: 600;">
+                  🚫 Kitchen Sold Out: {{ item.availability_reason|default:"Unavailable today" }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Ticket Special Instructions -->
+      <div style="background: rgba(9, 23, 44, 0.85); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 80px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">
+          Overall Order Special Instructions (Optional):
+        </label>
+        <input type="text" name="instructions" placeholder="e.g. Serve starters first, allergy to peanuts, VIP table" class="form-control" style="width: 100%;" />
+      </div>
+
+      <!-- Floating Action Footer -->
+      <div class="order-bar">
+        <div>
+          <b style="color: #ffffff; font-size: 15px;">Ready to send order?</b>
+          <span style="display: block; font-size: 12px; color: var(--text-secondary);">Items with quantity > 0 will be sent to the kitchen.</span>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <a href="{% url 'restaurant:waiter_table_detail' table.id %}" class="button" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); color: var(--text-secondary);">
+            Cancel
+          </a>
+          <button type="submit" class="button" style="background: linear-gradient(135deg, #2563eb, #3b82f6); border-color: #60a5fa; color: #ffffff;">
+            Submit Order to Kitchen →
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<script>
+  function filterDishes(slug) {
+    const cards = document.querySelectorAll('.dish-card');
+    const buttons = document.querySelectorAll('.cat-btn');
+
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    cards.forEach(card => {
+      if (slug === 'all' || card.getAttribute('data-cat') === slug) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+</script>
+{% endblock %}
+

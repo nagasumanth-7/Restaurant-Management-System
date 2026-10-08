@@ -1,0 +1,329 @@
+{% extends "restaurant/base.html" %}
+{% load static %}
+
+{% block title %}Kitchen Availability Board | Chef Portal{% endblock %}
+
+{% block head %}
+  <style>
+    .chef-shell {
+      min-height: calc(100vh - 170px);
+      padding: 140px max(6vw, 24px) 90px;
+      background: 
+        radial-gradient(circle at 15% 20%, rgba(20, 184, 166, 0.12), transparent 45%),
+        linear-gradient(180deg, #030813 0%, #061124 50%, #08162b 100%);
+      color: var(--text-primary);
+    }
+
+    .chef-container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .portal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .portal-header h1 {
+      margin: 8px 0 0;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -.03em;
+    }
+
+    /* Filter Card */
+    .filter-card {
+      background: rgba(9, 23, 44, 0.7);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 32px;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .category-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .category-pills a {
+      padding: 8px 16px;
+      border-radius: 30px;
+      font: 600 12px var(--sans);
+      text-decoration: none;
+      border: 1px solid var(--border-glass);
+      color: var(--text-muted);
+      background: rgba(8, 22, 44, 0.6);
+      transition: all 0.2s;
+    }
+
+    .category-pills a.active {
+      background: linear-gradient(135deg, rgba(20, 184, 166, 0.25) 0%, rgba(52, 211, 153, 0.15) 100%);
+      border-color: #34d399;
+      color: #ffffff;
+    }
+
+    /* Chef Dishes Grid */
+    .chef-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    .chef-item-card {
+      background: rgba(9, 23, 44, 0.8);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .chef-item-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-glow);
+    }
+
+    .chef-item-card.is-off {
+      background: rgba(16, 21, 35, 0.85);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .card-top h3 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .price-tag {
+      font: 700 16px var(--mono);
+      color: var(--gold-light);
+    }
+
+    .cat-tag {
+      font: 600 10px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      margin: 16px 0;
+      font: 700 12px var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .status-on {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+    }
+
+    .status-off {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+
+    .reason-text {
+      font-size: 11px;
+      color: #fca5a5;
+      margin-top: 4px;
+      display: block;
+      font-weight: 500;
+    }
+
+    .toggle-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .reason-input {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 12px;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      background: rgba(4, 14, 30, 0.7);
+      color: #ffffff;
+      outline: 0;
+    }
+
+    .reason-input:focus {
+      border-color: var(--blue);
+    }
+
+    .btn-avail-toggle {
+      width: 100%;
+      padding: 10px 16px;
+      font: 700 12px var(--mono);
+      letter-spacing: .04em;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-make-unavailable {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+    .btn-make-unavailable:hover {
+      background: rgba(239, 68, 68, 0.28);
+    }
+
+    .btn-make-available {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+    .btn-make-available:hover {
+      background: rgba(16, 185, 129, 0.28);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="chef-shell">
+    <div class="chef-container">
+      <div class="portal-header">
+        <div>
+          <p class="eyebrow"><a href="{% url 'restaurant:chef_dashboard' %}" style="color:var(--text-muted); text-decoration:none;">← CHEF DASHBOARD</a> <span>• KITCHEN BOARD</span></p>
+          <h1>Food Availability Control</h1>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <a class="button button-outline" href="{% url 'restaurant:menu' %}" target="_blank">
+            Customer View ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- Categories & Status Filter -->
+      <div class="filter-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <div class="category-pills">
+            <a href="?{% if search_query %}q={{ search_query }}&{% endif %}" class="{% if not selected_category %}active{% endif %}">
+              All Categories
+            </a>
+            {% for cat in categories %}
+              <a href="?category={{ cat.id }}{% if search_query %}&q={{ search_query }}{% endif %}" class="{% if selected_category == cat.id %}active{% endif %}">
+                {{ cat.name }}
+              </a>
+            {% endfor %}
+          </div>
+
+          <form method="GET" style="display: flex; align-items: center; padding: 0 12px; background: rgba(4,14,30,0.8); border: 1px solid var(--border-glass); border-radius: 6px;">
+            {% if selected_category %}
+              <input type="hidden" name="category" value="{{ selected_category }}">
+            {% endif %}
+            <span style="color: var(--cyan); margin-right: 6px;">⌕</span>
+            <input type="search" name="q" placeholder="Filter dish..." value="{{ search_query }}" style="background: transparent; border: 0; color: #fff; padding: 8px 0; font-size: 12px; outline: 0;">
+          </form>
+        </div>
+
+        <div style="display: flex; gap: 12px; font-size: 12px; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+          <span style="color: var(--text-dim); font-family: var(--mono); font-size: 11px;">FILTER:</span>
+          <a href="?{% if selected_category %}category={{ selected_category }}{% endif %}" style="color: {% if not selected_status %}var(--cyan){% else %}var(--text-muted){% endif %}; text-decoration: none;">All Items</a>
+          <span style="color:var(--border-glass);">|</span>
+          <a href="?status=available{% if selected_category %}&category={{ selected_category }}{% endif %}" style="color: {% if selected_status == 'available' %}#34d399{% else %}var(--text-muted){% endif %}; text-decoration: none;">🟢 Available</a>
+          <span style="color:var(--border-glass);">|</span>
+          <a href="?status=unavailable{% if selected_category %}&category={{ selected_category }}{% endif %}" style="color: {% if selected_status == 'unavailable' %}#f87171{% else %}var(--text-muted){% endif %}; text-decoration: none;">🔴 Sold Out</a>
+        </div>
+      </div>
+
+      <!-- Dishes Grid -->
+      <div class="chef-grid">
+        {% for item in items %}
+          <div class="chef-item-card card-3d {% if not item.is_available %}is-off{% endif %}">
+            <div>
+              <div class="card-top">
+                <h3>{{ item.name }}</h3>
+                <span class="price-tag">₹ {{ item.price }}</span>
+              </div>
+              <span class="cat-tag">{{ item.category.name }}</span>
+              <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin: 0 0 12px;">
+                {{ item.description|truncatewords:16 }}
+              </p>
+            </div>
+
+            <div>
+              <div class="status-indicator {% if item.is_available %}status-on{% else %}status-off{% endif %}">
+                {% if item.is_available %}
+                  <span>🟢 AVAILABLE</span>
+                {% else %}
+                  <div>
+                    <span>🔴 UNAVAILABLE</span>
+                    {% if item.availability_reason %}
+                      <span class="reason-text">Reason: {{ item.availability_reason }}</span>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Section 12 & 13: Chef toggles availability without editing price/category/deletion -->
+              <form method="POST" action="{% url 'restaurant:chef_menu_toggle_availability' item.id %}" class="toggle-form">
+                {% csrf_token %}
+                {% if item.is_available %}
+                  <input type="hidden" name="action" value="mark_unavailable">
+                  <input 
+                    type="text" 
+                    name="reason" 
+                    placeholder="Reason (e.g. stock finished)" 
+                    class="reason-input"
+                  >
+                  <button class="btn-avail-toggle btn-make-unavailable" type="submit">
+                    Mark Unavailable →
+                  </button>
+                {% else %}
+                  <input type="hidden" name="action" value="mark_available">
+                  <button class="btn-avail-toggle btn-make-available" type="submit">
+                    ✓ Mark Available (In Stock)
+                  </button>
+                {% endif %}
+              </form>
+            </div>
+          </div>
+        {% empty %}
+          <div style="grid-column: 1 / -1; padding: 48px; text-align: center; background: rgba(9, 23, 44, 0.4); border: 1px dashed rgba(121, 202, 255, 0.2); border-radius: var(--radius-lg);">
+            <p style="color: var(--text-muted); font-size: 15px; margin: 0;">No active recipes matched your filter.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
